@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKEOPI Food Cart & Coffee Bar — Visual Gallery</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="gallery.css">
+    <script src="products.js" defer></script>
+</head>
+
+<body>
+    <!-- Interactive Liquid Coffee Touching Surface Canvas -->
+    <canvas id="coffeeRippleCanvas"></canvas>
+
+    <div class="background"></div>
+    <div class="mouseGlow"></div>
+
+    <!-- Ambient Wave -->
+    <svg class="wave" viewBox="0 0 350 1000" preserveAspectRatio="none">
+        <path fill="#BB8C64" fill-opacity=".3" d="M155 0 C320 120 120 250 220 380 C330 500 100 640 220 760 C340 900 130 980 220 1000 L350 1000 L350 0 Z" />
+    </svg>
+
+    <!-- Liquid Frosted Navigation -->
+    <nav class="foodcart-nav">
+        <a href="index.html" class="logo">
+            <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="brand-logo-img" referrerPolicy="no-referrer">
+            <span>KKEOPI</span> <span class="brand-badge">[ 커피 갤러리 ]</span>
+        </a>
+
+        <div class="nav-links-wrapper">
+            <div class="sliding-pill" id="navPill"></div>
+            <ul id="navList">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="products.html">Our Menu</a></li>
+                <li><a href="about.html">About</a></li>
+                <li class="active"><a href="gallery.html">Gallery</a></li>
+                <li><a href="https://www.facebook.com/ajrienze.josol.3" target="_blank" rel="noopener">Contact</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-actions">
+            <a href="index.html" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Home
+            </a>
+            <button class="hamburger-btn" id="mobileMenuBtn" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <div class="mobile-drawer-backdrop" id="drawerBackdrop"></div>
+        <div class="mobile-drawer-content">
+            <div class="drawer-header">
+                <div class="logo">
+                    <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="brand-logo-img" referrerPolicy="no-referrer">
+                    <span>KKEOPI</span> <span class="brand-badge">[ 커피 ]</span>
+                </div>
+                <button class="drawer-close" id="drawerClose" aria-label="Close">&times;</button>
+            </div>
+            <ul class="mobile-nav-list">
+                <li><a href="index.html"><i class="fa-solid fa-house"></i> Home</a></li>
+                <li><a href="products.html"><i class="fa-solid fa-mug-hot"></i> Our Menu</a></li>
+                <li><a href="about.html"><i class="fa-solid fa-circle-info"></i> About</a></li>
+                <li class="active"><a href="gallery.html"><i class="fa-solid fa-images"></i> Gallery</a></li>
+                <li><a href="https://www.facebook.com/ajrienze.josol.3" target="_blank" rel="noopener"><i class="fa-solid fa-envelope"></i> Contact</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- MAIN MINIMAL GALLERY CONTAINER -->
+    <main class="foodcart-container">
+        <!-- Stand Header -->
+        <header class="cart-board-header">
+            <div class="stand-badge">
+                <span class="live-dot"></span> ARTISANAL MOMENTS • KOREAN FOOD CART & SLOW BAR
+            </div>
+            <h1>Visual Gallery</h1>
+            <p>A glimpse into our slow brew extractions, chilled milk clouds, and freshly pulled pastries.</p>
+
+            <!-- Minimal Category Switcher Filter -->
+            <div class="category-filters">
+                <button class="filter-chip active" data-filter="all">All Shots (8)</button>
+                <button class="filter-chip" data-filter="coffee"><i class="fa-solid fa-mug-hot"></i> Handcrafted Coffee</button>
+                <button class="filter-chip" data-filter="non-coffee"><i class="fa-solid fa-leaf"></i> Cold Teas & Milk</button>
+                <button class="filter-chip" data-filter="pastries"><i class="fa-solid fa-bread-slice"></i> Bakery & Pastries</button>
+            </div>
+        </header>
+
+        <!-- Minimal Gallery Grid -->
+        <section class="gallery-grid">
+            
+            <!-- 1. Caramel Iced Coffee -->
+            <article class="gallery-card" data-category="coffee">
+                <div class="gallery-img-wrap">
+                    <img src="https://frostingandfettuccine.com/wp-content/uploads/2022/12/Caramel-Iced-Coffee-6.jpg" alt="Caramel Iced Coffee" loading="lazy">
+                    <span class="photo-tag">Signature</span>
+                </div>
+                <div class="gallery-meta">
+                    <h3>Caramel Iced Coffee</h3>
+                    <span class="korean-name">카라멜 아이스 커피</span>
+                </div>
+            </article>
+
+            <!-- 2. Iced Americano -->
+            <article class="gallery-card" data-category="coffee">
+                <div class="gallery-img-wrap">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgDnHT6LTEKCmI2pJrgsleej0fQvez_DnVTEUowStRhdZLYjmKKCLsdJ8&s=10" alt="Iced Americano" loading="lazy">
+                    <span class="photo-tag">Classic</span>
+                </div>
+                <div class="gallery-meta">
+                    <h3>Iced Americano</h3>
+                    <span class="korean-name">아이스 아메리카노</span>
+                </div>
+            </article>
+
+            <!-- 3. Hazelnut Latte -->
+            <article class="gallery-card" data-category="coffee">
+                <div class="gallery-img-wrap">
+                    <img src="https://i.pinimg.com/736x/ca/73/28/ca732820d569e6c2a5d3f7ee340ab848.jpg" alt="Hazelnut Latte" loading="lazy">
+                    <span class="photo-tag">Nutty Aroma</span>
+                </div>
+                <div class="gallery-meta">
+                    <h3>Hazelnut Latte</h3>
+                    <span class="korean-name">헤이즐넛 라떼</span>
+                </div>
+            </article>
+
+            <!-- 4. Ceremonial Matcha Latte -->
+            <article class="gallery-card" data-category="non-coffee">
+                <div class="gallery-img-wrap">
+                    <img src="https://cdn.shopify.com/s/files/1/0560/1699/4381/files/unnamed-1_1024x1024_a794ea7e-13eb-4360-9b3b-96cd7c8c3113.webp?v=1782242740" alt="Matcha Latte" loading="lazy">
+                    <span class="photo-tag">Uji Matcha</span>
+                </div>
+                <div class="gallery-meta">
+                    <h3>Matcha Latte</h3>
+                    <span class="korean-name">말차 라떼</span>
+                </div>
+            </article>
+
+            <!-- 5. Strawberry Cream -->
+            <article class="gallery-card" data-category="non-coffee">
+                <div class="gallery-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80" alt="Strawberry Cream Cloud" loading="lazy">
+                    <span class="photo-tag">Seoul Special</span>
+                </div>
+                <div class="gallery-meta">
+                    <h3>Strawberry Cream</h3>
+                    <span class="korean-name">딸기 크림 라떼</span>
+                </div>
+            </article>
+
+            <!-- 6. French Croissant -->
+            <article class="gallery-card" data-category="pastries">
+                <div class="gallery-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80" alt="Butter Croissant" loading="lazy">
+                    <span class="photo-tag">36 Layers</span>
+                </div>
+                <div class="gallery-meta">
+                    <h3>Butter Croissant</h3>
+                    <span class="korean-name">버터 크루아상</span>
+                </div>
+            </article>
+
+            <!-- 7. Apple Turnover -->
+            <article class="gallery-card" data-category="pastries">
+                <div class="gallery-img-wrap">
+                    <img src="https://sallysbakingaddiction.com/wp-content/uploads/2013/09/homemade-apple-turnovers-2-600x600.jpg" alt="Apple Turnover" loading="lazy">
+                    <span class="photo-tag">Cinnamon Apple</span>
+                </div>
+                <div class="gallery-meta">
+                    <h3>Spiced Apple Turnover</h3>
+                    <span class="korean-name">애플 턴오버</span>
+                </div>
+            </article>
+
+            <!-- 8. Chocolate Pastry -->
+            <article class="gallery-card" data-category="pastries">
+                <div class="gallery-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80" alt="Chocolate Pastry" loading="lazy">
+                    <span class="photo-tag">Belgian Dark</span>
+                </div>
+                <div class="gallery-meta">
+                    <h3>Pain au Chocolat</h3>
+                    <span class="korean-name">뺑 오 쇼콜라</span>
+                </div>
+            </article>
+
+        </section>
+    </main>
+
+    <footer class="foodcart-footer">
+        <p>© 2026 KKEOPI Korean Food Cart & Specialty Bar • Captured with Love</p>
+    </footer>
+</body>
+</html>

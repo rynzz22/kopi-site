@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKEOPI Food Cart & Slow Bar — Our Story & Founders</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="about.css">
+    <script src="products.js" defer></script>
+</head>
+
+<body>
+    <!-- Interactive Liquid Coffee Touching Surface Canvas -->
+    <canvas id="coffeeRippleCanvas"></canvas>
+
+    <div class="background"></div>
+    <div class="mouseGlow"></div>
+
+    <svg class="wave" viewBox="0 0 350 1000" preserveAspectRatio="none">
+        <path fill="#BB8C64" fill-opacity=".3" d="M155 0 C320 120 120 250 220 380 C330 500 100 640 220 760 C340 900 130 980 220 1000 L350 1000 L350 0 Z" />
+    </svg>
+
+    <!-- Liquid Frosted Navigation -->
+    <nav class="foodcart-nav">
+        <a href="index.html" class="logo">
+            <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="brand-logo-img" referrerPolicy="no-referrer">
+            <span>KKEOPI</span> <span class="brand-badge">[ 커피 이야기 ]</span>
+        </a>
+
+        <div class="nav-links-wrapper">
+            <div class="sliding-pill" id="navPill"></div>
+            <ul id="navList">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="products.html">Our Menu</a></li>
+                <li class="active"><a href="about.html">About</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="https://www.facebook.com/ajrienze.josol.3" target="_blank" rel="noopener">Contact</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-actions">
+            <a href="index.html" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Home
+            </a>
+            <button class="hamburger-btn" id="mobileMenuBtn" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <div class="mobile-drawer-backdrop" id="drawerBackdrop"></div>
+        <div class="mobile-drawer-content">
+            <div class="drawer-header">
+                <div class="logo">
+                    <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="brand-logo-img" referrerPolicy="no-referrer">
+                    <span>KKEOPI</span> <span class="brand-badge">[ 커피 ]</span>
+                </div>
+                <button class="drawer-close" id="drawerClose" aria-label="Close">&times;</button>
+            </div>
+            <ul class="mobile-nav-list">
+                <li><a href="index.html"><i class="fa-solid fa-house"></i> Home</a></li>
+                <li><a href="products.html"><i class="fa-solid fa-mug-hot"></i> Our Menu</a></li>
+                <li class="active"><a href="about.html"><i class="fa-solid fa-circle-info"></i> About</a></li>
+                <li><a href="gallery.html"><i class="fa-solid fa-images"></i> Gallery</a></li>
+                <li><a href="https://www.facebook.com/ajrienze.josol.3" target="_blank" rel="noopener"><i class="fa-solid fa-envelope"></i> Contact</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- MAIN ABOUT STORY & FOUNDERS CONTAINER -->
+    <main class="foodcart-container">
+        <!-- Header Banner -->
+        <header class="cart-board-header">
+            <div class="stand-badge">
+                <span class="live-dot"></span> EST. 2026 • POP-UP CART & SLOW BREW BAR
+            </div>
+            <h1>Our Cart Story</h1>
+            <p>Bringing slow-crafted Korean cafe culture, intentional flavors, and neighborhood warmth to your daily routine.</p>
+        </header>
+
+        <!-- Brand Story Narrative Block -->
+        <section class="story-narrative-card">
+            <div class="narrative-tag">[ OUR BEGINNING ]</div>
+            <h2>Handcrafted with Patience, Poured with Purpose</h2>
+            <div class="narrative-text">
+                <p>KKEOPI was born from a shared love for slow mornings, warm conversation, and the refined simplicity of Seoul's boutique coffee culture. What began as a dream sketched on paper turned into a mobile slow bar designed to bring handcrafted specialty beverages straight to the street corner.</p>
+                <p>We believe great coffee is not rushed. Every shot is measured, every dairy foam is textured to silky micro-bubbles, and every syrup is carefully balanced. From our rich Spanish lattes to ceremonial grade Uji matcha and fresh morning pastries, KKEOPI is your daily invitation to pause, sip, and savor.</p>
+            </div>
+        </section>
+
+        <!-- Craft Pillars Grid -->
+        <section class="about-grid">
+            <article class="about-card">
+                <div class="about-icon-box">
+                    <i class="fa-solid fa-mug-saucer"></i>
+                </div>
+                <h2>Artisanal Slow Extraction</h2>
+                <p>Small-batch espressos pulled with precision pressure and calibrated temperatures, producing a dense crema and deeply aromatic cup.</p>
+            </article>
+
+            <article class="about-card">
+                <div class="about-icon-box">
+                    <i class="fa-solid fa-seedling"></i>
+                </div>
+                <h2>Micro-Lot Single Origin</h2>
+                <p>Highland Arabica beans harvested from ethical sustainable farms, micro-roasted weekly to preserve delicate fruity and nutty notes.</p>
+            </article>
+
+            <article class="about-card">
+                <div class="about-icon-box">
+                    <i class="fa-solid fa-bread-slice"></i>
+                </div>
+                <h2>Daily Oven Pastries</h2>
+                <p>Laminated French butter croissants, Belgian chocolate rolls, and warm cinnamon apple turnovers baked golden fresh every morning.</p>
+            </article>
+        </section>
+
+        <!-- Founders & Team Section -->
+        <section class="founders-section">
+            <div class="section-heading">
+                <span class="sub-badge">[ LEADERSHIP & CRAFT ]</span>
+                <h2>Meet the Founders</h2>
+                <p>The visionary minds and passionate hearts shaping the KKEOPI coffee experience.</p>
+            </div>
+
+            <div class="founders-grid">
+                <!-- 1. Founder: Kate Lorene -->
+                <article class="founder-card highlight-founder">
+                    <div class="founder-badge-row">
+                        <span class="role-pill founder-pill">Founder</span>
+                        <span class="korean-role">[ 창립자 ]</span>
+                    </div>
+                    <div class="founder-avatar-wrap">
+                        <div class="avatar-initials">KL</div>
+                        <div class="avatar-ring"></div>
+                    </div>
+                    <div class="founder-info">
+                        <h3>Kate Lorene</h3>
+                        <span class="founder-title">Founder & Master Recipe Curator</span>
+                        <p class="founder-bio">Kate founded KKEOPI inspired by the timeless minimalism of Korean slow bars. She oversees recipe development, flavor profiling, and bean sourcing standards, ensuring every drink is crafted to perfection.</p>
+                    </div>
+                    <div class="founder-footer">
+                        <span class="specialty-tag"><i class="fa-solid fa-droplet"></i> Extraction & Blend Profile</span>
+                    </div>
+                </article>
+
+                <!-- 2. Co-Founder: Aj Rienze -->
+                <article class="founder-card">
+                    <div class="founder-badge-row">
+                        <span class="role-pill co-founder-pill">Co-Founder</span>
+                        <span class="korean-role">[ 공동 창립자 ]</span>
+                    </div>
+                    <div class="founder-avatar-wrap">
+                        <div class="avatar-initials">AR</div>
+                        <div class="avatar-ring"></div>
+                    </div>
+                    <div class="founder-info">
+                        <h3>Aj Rienze</h3>
+                        <span class="founder-title">Co-Founder & Cart Operations</span>
+                        <p class="founder-bio">Aj directs food cart logistics, technical operations, and setup design. With a focus on seamless service and barista workflow, Aj ensures every guest receives fast, warm, and attentive care.</p>
+                    </div>
+                    <div class="founder-footer">
+                        <span class="specialty-tag"><i class="fa-solid fa-gear"></i> Cart Architecture & Flow</span>
+                    </div>
+                </article>
+
+                <!-- 3. Co-Founder: Jassen Monique -->
+                <article class="founder-card">
+                    <div class="founder-badge-row">
+                        <span class="role-pill co-founder-pill">Co-Founder</span>
+                        <span class="korean-role">[ 공동 창립자 ]</span>
+                    </div>
+                    <div class="founder-avatar-wrap">
+                        <div class="avatar-initials">JM</div>
+                        <div class="avatar-ring"></div>
+                    </div>
+                    <div class="founder-info">
+                        <h3>Jassen Monique</h3>
+                        <span class="founder-title">Co-Founder & Creative Director</span>
+                        <p class="founder-bio">Jassen leads KKEOPI's aesthetic direction, customer experience, and brand storytelling. She blends Korean minimalist visual harmony with community-centered warmth.</p>
+                    </div>
+                    <div class="founder-footer">
+                        <span class="specialty-tag"><i class="fa-solid fa-palette"></i> Experience & Aesthetics</span>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Quote Card -->
+        <section class="quote-card">
+            <blockquote>
+                "Coffee tastes better when made with warmth, patience, and attention to every drop of crema."
+            </blockquote>
+            <span class="quote-author">— Kate Lorene, Aj Rienze & Jassen Monique</span>
+        </section>
+    </main>
+
+    <footer class="foodcart-footer">
+        <p>© 2026 KKEOPI Korean Food Cart & Specialty Bar • Crafted with Dedication</p>
+    </footer>
+</body>
+</html>

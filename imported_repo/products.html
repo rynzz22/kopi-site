@@ -1,0 +1,596 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>KKEOPI | Products</title>
+    <script src="KKEOPI.js" defer></script>
+
+    <link rel="stylesheet" href="products.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="background"></div>
+    <div class="mouseGlow"></div>
+
+    <svg class="wave" viewBox="0 0 350 1000" preserveAspectRatio="none">
+        <path
+            fill="#BB8C64"
+            fill-opacity=".35"
+            d="
+                M155 0
+                C320 120 120 250 220 380
+                C330 500 100 640 220 760
+                C340 900 130 980 220 1000
+                L350 1000
+                L350 0
+                Z"
+        />
+    </svg>
+
+    <!-- Floating Cart -->
+    <div class="floatingCart">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span id="cartCount">0</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">
+            ☕ KKEOPI
+        </div>
+
+        <div class="navButtons">
+            <button onclick="window.location.href='KKEOPI.html'">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1>Signature Coffee</h1>
+        <p>
+            Handcrafted Korean-inspired coffee made with premium ingredients.
+        </p>
+    </section>
+
+    <!-- PRODUCTS -->
+    <div class="products">
+        <!-- CARD -->
+        <div class="productCard">
+            <div class="productHeader">
+                <div>
+                    <h2>☕ Caramel Macchiato</h2>
+                    <p>Rich espresso layered with caramel milk.</p>
+                </div>
+
+                <div>
+                    <h3>₱165</h3>
+                </div>
+            </div>
+
+            <img src="https://frostingandfettuccine.com/wp-content/uploads/2022/12/Caramel-Iced-Coffee-6.jpg">
+
+            <button class="expandButton">
+                Customize
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="productContent">
+                <!-- SIZE -->
+                <div class="option">
+                    <h4>Choose Size</h4>
+                    <div class="chips">
+                        <button class="chip active">Regular</button>
+                        <button class="chip">Large</button>
+                        <button class="chip">XL</button>
+                    </div>
+                </div>
+
+                <!-- Sugar -->
+                <div class="option">
+                    <h4>Sugar Level</h4>
+                    <div class="chips">
+                        <button class="chip">0%</button>
+                        <button class="chip">25%</button>
+                        <button class="chip active">50%</button>
+                        <button class="chip">75%</button>
+                        <button class="chip">100%</button>
+                    </div>
+                </div>
+
+                <!-- Ice -->
+                <div class="option">
+                    <h4>Ice Level</h4>
+                    <div class="chips">
+                        <button class="chip">Less</button>
+                        <button class="chip active">Normal</button>
+                        <button class="chip">Extra</button>
+                    </div>
+                </div>
+
+                <!-- Addons -->
+                <div class="option">
+                    <h4>Add-ons</h4>
+                    <label>
+                        <input type="checkbox">
+                        Extra Espresso (+₱25)
+                    </label>
+                    <label>
+                        <input type="checkbox">
+                        Whipped Cream (+₱20)
+                    </label>
+                    <label>
+                        <input type="checkbox">
+                        Oat Milk (+₱30)
+                    </label>
+                </div>
+
+                <!-- Quantity -->
+                <div class="quantity">
+                    <button class="minus">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <span>1</span>
+                    <button class="plus">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="actions">
+                    <button class="heart">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                    <button class="save">
+                        Save Later
+                    </button>
+                    <button class="cart">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        Add Cart
+                    </button>
+                    <button class="buy">
+                        Buy Now
+                    </button>
+                    <button class="checkout">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECOND PRODUCT -->
+        <div class="productCard">
+            <div class="productHeader">
+                <div>
+                    <h2>☕ Hazelnut Latte</h2>
+                    <p>Smooth espresso blended with hazelnut cream.</p>
+                </div>
+
+                <div>
+                    <h3>₱170</h3>
+                </div>
+            </div>
+
+            <img src="https://i.pinimg.com/736x/ca/73/28/ca732820d569e6c2a5d3f7ee340ab848.jpg">
+
+            <button class="expandButton">
+                Customize
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="productContent">
+                <div class="option">
+                    <h4>Choose Size</h4>
+                    <div class="chips">
+                        <button class="chip active">Regular</button>
+                        <button class="chip">Large</button>
+                        <button class="chip">XL</button>
+                    </div>
+                </div>
+
+                <div class="quantity">
+                    <button class="minus">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <span>1</span>
+                    <button class="plus">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button class="heart">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                    <button class="save">
+                        Save Later
+                    </button>
+                    <button class="cart">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        Add Cart
+                    </button>
+                    <button class="buy">
+                        Buy Now
+                    </button>
+                    <button class="checkout">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- THIRD PRODUCT -->
+        <div class="productCard">
+            <div class="productHeader">
+                <div>
+                    <h2>🍵 Matcha Latte</h2>
+                    <p>Premium ceremonial matcha with creamy milk.</p>
+                </div>
+
+                <div>
+                    <h3>₱160</h3>
+                </div>
+            </div>
+
+            <img src="https://cdn.shopify.com/s/files/1/0560/1699/4381/files/unnamed-1_1024x1024_a794ea7e-13eb-4360-9b3b-96cd7c8c3113.webp?v=1782242740">
+
+            <button class="expandButton">
+                Customize
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="productContent">
+                <div class="quantity">
+                    <button class="minus">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <span>1</span>
+                    <button class="plus">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button class="heart">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                    <button class="save">
+                        Save Later
+                    </button>
+                    <button class="cart">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        Add Cart
+                    </button>
+                    <button class="buy">
+                        Buy Now
+                    </button>
+                    <button class="checkout">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOURTH PRODUCT -->
+        <div class="productCard">
+            <div class="productHeader">
+                <div>
+                    <h2>☕ Vanilla Bean Latte</h2>
+                    <p>Velvety espresso with smooth vanilla bean cream.</p>
+                </div>
+
+                <div>
+                    <h3>₱175</h3>
+                </div>
+            </div>
+
+            <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80">
+
+            <button class="expandButton">
+                Customize
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="productContent">
+                <div class="option">
+                    <h4>Choose Size</h4>
+                    <div class="chips">
+                        <button class="chip active">Regular</button>
+                        <button class="chip">Large</button>
+                        <button class="chip">XL</button>
+                    </div>
+                </div>
+
+                <div class="quantity">
+                    <button class="minus">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <span>1</span>
+                    <button class="plus">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button class="heart">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                    <button class="save">
+                        Save Later
+                    </button>
+                    <button class="cart">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        Add Cart
+                    </button>
+                    <button class="buy">
+                        Buy Now
+                    </button>
+                    <button class="checkout">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- FIFTH PRODUCT -->
+        <div class="productCard">
+            <div class="productHeader">
+                <div>
+                    <h2>🥤 Cold Brew Tonic</h2>
+                    <p>Bright citrus cold brew with a crisp sparkling finish.</p>
+                </div>
+
+                <div>
+                    <h3>₱150</h3>
+                </div>
+            </div>
+
+            <img src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1200&q=80">
+
+            <button class="expandButton">
+                Customize
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="productContent">
+                <div class="option">
+                    <h4>Choose Size</h4>
+                    <div class="chips">
+                        <button class="chip active">Regular</button>
+                        <button class="chip">Large</button>
+                        <button class="chip">XL</button>
+                    </div>
+                </div>
+
+                <div class="quantity">
+                    <button class="minus">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <span>1</span>
+                    <button class="plus">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button class="heart">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                    <button class="save">
+                        Save Later
+                    </button>
+                    <button class="cart">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        Add Cart
+                    </button>
+                    <button class="buy">
+                        Buy Now
+                    </button>
+                    <button class="checkout">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIXTH PRODUCT -->
+        <div class="productCard">
+            <div class="productHeader">
+                <div>
+                    <h2>🍓 Strawberry Cream Latte</h2>
+                    <p>Sweet strawberry notes blended into a creamy latte.</p>
+                </div>
+
+                <div>
+                    <h3>₱180</h3>
+                </div>
+            </div>
+
+            <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80">
+
+            <button class="expandButton">
+                Customize
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="productContent">
+                <div class="option">
+                    <h4>Choose Size</h4>
+                    <div class="chips">
+                        <button class="chip active">Regular</button>
+                        <button class="chip">Large</button>
+                        <button class="chip">XL</button>
+                    </div>
+                </div>
+
+                <div class="quantity">
+                    <button class="minus">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <span>1</span>
+                    <button class="plus">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button class="heart">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                    <button class="save">
+                        Save Later
+                    </button>
+                    <button class="cart">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        Add Cart
+                    </button>
+                    <button class="buy">
+                        Buy Now
+                    </button>
+                    <button class="checkout">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEVENTH PRODUCT -->
+        <div class="productCard">
+            <div class="productHeader">
+                <div>
+                    <h2>🍫 Mocha Frappe</h2>
+                    <p>Rich chocolate and espresso blended into a cool frappe.</p>
+                </div>
+
+                <div>
+                    <h3>₱185</h3>
+                </div>
+            </div>
+
+            <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=1200&q=80">
+
+            <button class="expandButton">
+                Customize
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="productContent">
+                <div class="option">
+                    <h4>Choose Size</h4>
+                    <div class="chips">
+                        <button class="chip active">Regular</button>
+                        <button class="chip">Large</button>
+                        <button class="chip">XL</button>
+                    </div>
+                </div>
+
+                <div class="quantity">
+                    <button class="minus">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <span>1</span>
+                    <button class="plus">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button class="heart">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                    <button class="save">
+                        Save Later
+                    </button>
+                    <button class="cart">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        Add Cart
+                    </button>
+                    <button class="buy">
+                        Buy Now
+                    </button>
+                    <button class="checkout">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- EIGHTH PRODUCT -->
+        <div class="productCard">
+            <div class="productHeader">
+                <div>
+                    <h2>🌰 Honey Cinnamon Latte</h2>
+                    <p>Warm cinnamon notes with golden honey sweetness.</p>
+                </div>
+
+                <div>
+                    <h3>₱170</h3>
+                </div>
+            </div>
+
+            <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80">
+
+            <button class="expandButton">
+                Customize
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="productContent">
+                <div class="option">
+                    <h4>Choose Size</h4>
+                    <div class="chips">
+                        <button class="chip active">Regular</button>
+                        <button class="chip">Large</button>
+                        <button class="chip">XL</button>
+                    </div>
+                </div>
+
+                <div class="quantity">
+                    <button class="minus">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <span>1</span>
+                    <button class="plus">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div class="actions">
+                    <button class="heart">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                    <button class="save">
+                        Save Later
+                    </button>
+                    <button class="cart">
+                        <i class="fa-solid fa-cart-plus"></i>
+                        Add Cart
+                    </button>
+                    <button class="buy">
+                        Buy Now
+                    </button>
+                    <button class="checkout">
+                        Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>
+            © 2026 KKEOPI Coffee • Brewed with ❤️
+        </p>
+    </footer>
+
+    <script src="products.js"></script>
+</body>
+</html>

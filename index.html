@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KKEOPI Coffee — Crafted Coffee for Every Moment</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="KKEOPI.css">
+  <script src="KKEOPI.js" defer></script>
+</head>
+
+<body>
+  <!-- Interactive Liquid Coffee Touching Surface Canvas -->
+  <canvas id="coffeeRippleCanvas"></canvas>
+
+  <div class="left-side"></div>
+  <div class="right-side"></div>
+  <div class="mouseGlow"></div>
+
+  <!-- Coffee Wave from AI -->
+  <svg class="wave" viewBox="0 0 350 1000" preserveAspectRatio="none">
+    <path fill="#BB8C64"
+      d="M155 0
+      C320 120 120 250 220 380
+      C330 500 100 640 220 760
+      C340 900 130 980 220 1000
+      L350 1000
+      L350 0Z" />
+  </svg>
+
+  <!-- Liquid Frosted Navigation Bar -->
+  <nav class="liquid-nav">
+    <a href="index.html" class="logo">
+      <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="brand-logo-img" referrerPolicy="no-referrer">
+      <span>KKEOPI</span> <span class="brand-badge">[ 커피 ]</span>
+    </a>
+    
+    <div class="nav-links-wrapper">
+      <div class="sliding-pill" id="navPill"></div>
+      <ul id="navList">
+        <li class="active"><a href="index.html">Home</a></li>
+        <li><a href="products.html">Our Menu</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+        <li><a href="https://www.facebook.com/ajrienze.josol.3" target="_blank" rel="noopener">Contact</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-actions">
+      <a href="products.html" class="order liquid-sheen">Order Now</a>
+      <button class="hamburger-btn" id="mobileMenuBtn" aria-label="Toggle navigation menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Responsive Mobile Hamburger Drawer -->
+  <div class="mobile-drawer" id="mobileDrawer">
+    <div class="mobile-drawer-backdrop" id="drawerBackdrop"></div>
+    <div class="mobile-drawer-content">
+      <div class="drawer-header">
+        <div class="logo">
+          <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="brand-logo-img" referrerPolicy="no-referrer">
+          <span>KKEOPI</span> <span class="brand-badge">[ 커피 ]</span>
+        </div>
+        <button class="drawer-close" id="drawerClose" aria-label="Close menu">&times;</button>
+      </div>
+      <ul class="mobile-nav-list">
+        <li class="active"><a href="index.html"><i class="fa-solid fa-house"></i> Home</a></li>
+        <li><a href="products.html"><i class="fa-solid fa-mug-hot"></i> Our Menu</a></li>
+        <li><a href="about.html"><i class="fa-solid fa-circle-info"></i> About</a></li>
+        <li><a href="gallery.html"><i class="fa-solid fa-images"></i> Gallery</a></li>
+        <li><a href="https://www.facebook.com/ajrienze.josol.3" target="_blank" rel="noopener"><i class="fa-solid fa-envelope"></i> Contact</a></li>
+      </ul>
+      <div class="drawer-footer">
+        <a href="products.html" class="order mobile-order liquid-sheen">Order Now</a>
+      </div>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="hero-brand-badge">
+      <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="hero-logo-img" referrerPolicy="no-referrer">
+      <span class="hero-badge-text">EST. 2026 • POP-UP CART & SLOW BAR</span>
+    </div>
+    <h1> KKEOPI</h1>
+    <h2>Crafted Coffee for Every Moment</h2>
+    <p>Premium handcrafted coffee inspired by slow mornings, minimalist aesthetics, and unforgettable flavors.</p>
+    <div class="buttons">
+      <a href="products.html" class="liquid-sheen">Explore Menu</a>
+      <a href="about.html">Our Story</a>
+    </div>
+  </section>
+
+  <!-- Underneath Animated Waving Coffee Liquid Ocean -->
+  <div class="coffee-bottom-waves" aria-hidden="true">
+    <svg class="coffee-wave-svg" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="espressoGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#7B4E2E" />
+          <stop offset="40%" stop-color="#54331C" />
+          <stop offset="100%" stop-color="#301A0D" />
+        </linearGradient>
+        <linearGradient id="caramelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#C79668" />
+          <stop offset="100%" stop-color="#8C5C38" />
+        </linearGradient>
+        <linearGradient id="cremaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#EED5BA" />
+          <stop offset="100%" stop-color="#B88A60" />
+        </linearGradient>
+      </defs>
+      
+      <!-- Back Crema Foam Wave -->
+      <path class="wave-layer wave-layer-3" fill="url(#cremaGrad)" fill-opacity="0.5"
+        d="M0,160 C320,240 480,80 800,180 C1120,280 1280,120 1440,160 L1440,320 L0,320 Z"></path>
+      
+      <!-- Middle Caramel Wave -->
+      <path class="wave-layer wave-layer-2" fill="url(#caramelGrad)" fill-opacity="0.8"
+        d="M0,192 C240,120 480,260 720,180 C960,100 1200,240 1440,192 L1440,320 L0,320 Z"></path>
+        
+      <!-- Foreground Rich Espresso Wave -->
+      <path class="wave-layer wave-layer-1" fill="url(#espressoGrad)"
+        d="M0,224 C360,160 640,290 1000,210 C1240,150 1360,250 1440,224 L1440,320 L0,320 Z"></path>
+    </svg>
+    
+    <!-- Floating Froth / Crema Bubbles -->
+    <div class="crema-foam-bubbles">
+      <span class="foam-bubble b1"></span>
+      <span class="foam-bubble b2"></span>
+      <span class="foam-bubble b3"></span>
+      <span class="foam-bubble b4"></span>
+      <span class="foam-bubble b5"></span>
+    </div>
+  </div>
+</body>
+</html>

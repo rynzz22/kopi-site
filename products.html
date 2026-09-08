@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKEOPI Food Cart & Coffee Bar — Menu & Checkout</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="products.css">
+    <script src="products.js" defer></script>
+</head>
+
+<body>
+    <!-- Interactive Liquid Coffee Touching Surface Canvas -->
+    <canvas id="coffeeRippleCanvas"></canvas>
+
+    <div class="background"></div>
+    <div class="mouseGlow"></div>
+
+    <!-- Background Coffee Wave -->
+    <svg class="wave" viewBox="0 0 350 1000" preserveAspectRatio="none">
+        <path fill="#BB8C64" fill-opacity=".25" d="M155 0 C320 120 120 250 220 380 C330 500 100 640 220 760 C340 900 130 980 220 1000 L350 1000 L350 0 Z" />
+    </svg>
+
+    <!-- Floating Food Cart Order Pill -->
+    <button class="floatingCart" id="cartTrigger" aria-label="View Food Cart Order">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span class="cart-label">Cart</span>
+        <span id="cartCount">0</span>
+    </button>
+
+    <!-- Liquid Frosted Navigation -->
+    <nav class="foodcart-nav">
+        <a href="index.html" class="logo">
+            <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="brand-logo-img" referrerPolicy="no-referrer">
+            <span>KKEOPI</span> <span class="brand-badge">[ 커피 카트 ]</span>
+        </a>
+
+        <div class="nav-links-wrapper">
+            <div class="sliding-pill" id="navPill"></div>
+            <ul id="navList">
+                <li><a href="index.html">Home</a></li>
+                <li class="active"><a href="products.html">Our Menu</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="https://www.facebook.com/ajrienze.josol.3" target="_blank" rel="noopener">Contact</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-actions">
+            <a href="index.html" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Home
+            </a>
+            <button class="hamburger-btn" id="mobileMenuBtn" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <div class="mobile-drawer-backdrop" id="drawerBackdrop"></div>
+        <div class="mobile-drawer-content">
+            <div class="drawer-header">
+                <div class="logo">
+                    <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="brand-logo-img" referrerPolicy="no-referrer">
+                    <span>KKEOPI</span> <span class="brand-badge">[ 커피 ]</span>
+                </div>
+                <button class="drawer-close" id="drawerClose" aria-label="Close">&times;</button>
+            </div>
+            <ul class="mobile-nav-list">
+                <li><a href="index.html"><i class="fa-solid fa-house"></i> Home</a></li>
+                <li class="active"><a href="products.html"><i class="fa-solid fa-mug-hot"></i> Our Menu</a></li>
+                <li><a href="about.html"><i class="fa-solid fa-circle-info"></i> About</a></li>
+                <li><a href="gallery.html"><i class="fa-solid fa-images"></i> Gallery</a></li>
+                <li><a href="https://www.facebook.com/ajrienze.josol.3" target="_blank" rel="noopener"><i class="fa-solid fa-envelope"></i> Contact</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <main class="foodcart-container">
+        <!-- Cart Header / Kiosk Board Banner -->
+        <header class="cart-board-header">
+            <div class="stand-badge">
+                <span class="live-dot"></span> OPEN TODAY • FRESH BREWS & SLOW-BAKED PASTRIES
+            </div>
+            <h1>Our Menu</h1>
+            <p>Handcrafted Korean specialty extractions, iced teas, and warm flaky bakery items tailored to your taste.</p>
+
+            <!-- Minimal Category Switcher Filter -->
+            <div class="category-filters">
+                <button class="filter-chip active" data-filter="all">All Items (10)</button>
+                <button class="filter-chip" data-filter="signature"><i class="fa-solid fa-mug-hot"></i> Espresso & Lattes</button>
+                <button class="filter-chip" data-filter="non-coffee"><i class="fa-solid fa-leaf"></i> Refreshers & Tea</button>
+                <button class="filter-chip" data-filter="pastries"><i class="fa-solid fa-bread-slice"></i> Bakery Pastries</button>
+            </div>
+        </header>
+
+        <!-- MINIMAL FOOD CART PRODUCTS GRID -->
+        <section class="products-grid">
+            
+            <!-- 1. Caramel Macchiato -->
+            <article class="cart-card productCard" data-category="signature" data-base-price="165" data-title="Caramel Macchiato" data-type="coffee">
+                <div class="cart-img-wrap">
+                    <img src="https://frostingandfettuccine.com/wp-content/uploads/2022/12/Caramel-Iced-Coffee-6.jpg" alt="Caramel Macchiato" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Bestseller</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Caramel Macchiato</h2>
+                            <span class="price-tag" data-base="165">₱165</span>
+                        </div>
+                        <p class="desc">Velvety milk infused with vanilla, marked with dark espresso & caramel drizzle.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Size</span>
+                            <div class="chips size-chips">
+                                <button class="chip active" data-size="Regular" data-extra="0">Reg</button>
+                                <button class="chip" data-size="Large" data-extra="20">L (+₱20)</button>
+                                <button class="chip" data-size="Extra Large" data-extra="35">XL (+₱35)</button>
+                            </div>
+                        </div>
+                        <div class="chip-row">
+                            <span class="chip-label">Sugar</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip" data-sugar="0%">0%</button>
+                                <button class="chip active" data-sugar="50%">50%</button>
+                                <button class="chip" data-sugar="100%">100%</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 2. Hazelnut Latte -->
+            <article class="cart-card productCard" data-category="signature" data-base-price="170" data-title="Hazelnut Latte" data-type="coffee">
+                <div class="cart-img-wrap">
+                    <img src="https://i.pinimg.com/736x/ca/73/28/ca732820d569e6c2a5d3f7ee340ab848.jpg" alt="Hazelnut Latte" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Popular</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Hazelnut Latte</h2>
+                            <span class="price-tag" data-base="170">₱170</span>
+                        </div>
+                        <p class="desc">Smooth espresso blended with roasted hazelnut cream and velvety microfoam.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Size</span>
+                            <div class="chips size-chips">
+                                <button class="chip active" data-size="Regular" data-extra="0">Reg</button>
+                                <button class="chip" data-size="Large" data-extra="20">L (+₱20)</button>
+                                <button class="chip" data-size="Extra Large" data-extra="35">XL (+₱35)</button>
+                            </div>
+                        </div>
+                        <div class="chip-row">
+                            <span class="chip-label">Sugar</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip" data-sugar="25%">25%</button>
+                                <button class="chip active" data-sugar="50%">50%</button>
+                                <button class="chip" data-sugar="75%">75%</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 3. Matcha Latte -->
+            <article class="cart-card productCard" data-category="non-coffee" data-base-price="160" data-title="Matcha Latte" data-type="tea">
+                <div class="cart-img-wrap">
+                    <img src="https://cdn.shopify.com/s/files/1/0560/1699/4381/files/unnamed-1_1024x1024_a794ea7e-13eb-4360-9b3b-96cd7c8c3113.webp?v=1782242740" alt="Matcha Latte" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Ceremonial</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Matcha Latte</h2>
+                            <span class="price-tag" data-base="160">₱160</span>
+                        </div>
+                        <p class="desc">Japanese ceremonial Uji matcha whisked fresh with silky milk & pure cane sugar.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Size</span>
+                            <div class="chips size-chips">
+                                <button class="chip active" data-size="Regular" data-extra="0">Reg</button>
+                                <button class="chip" data-size="Large" data-extra="20">L (+₱20)</button>
+                                <button class="chip" data-size="Extra Large" data-extra="35">XL (+₱35)</button>
+                            </div>
+                        </div>
+                        <div class="chip-row">
+                            <span class="chip-label">Sugar</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip" data-sugar="0%">0%</button>
+                                <button class="chip active" data-sugar="50%">50%</button>
+                                <button class="chip" data-sugar="100%">100%</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 4. Strawberry Cream Latte -->
+            <article class="cart-card productCard" data-category="non-coffee" data-base-price="180" data-title="Strawberry Cream Latte" data-type="tea">
+                <div class="cart-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80" alt="Strawberry Cream Latte" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Fresh Puree</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Strawberry Cream Latte</h2>
+                            <span class="price-tag" data-base="180">₱180</span>
+                        </div>
+                        <p class="desc">Fresh housemade strawberry compote layered with sweet cream & chilled milk.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Size</span>
+                            <div class="chips size-chips">
+                                <button class="chip active" data-size="Regular" data-extra="0">Reg</button>
+                                <button class="chip" data-size="Large" data-extra="20">L (+₱20)</button>
+                                <button class="chip" data-size="Extra Large" data-extra="35">XL (+₱35)</button>
+                            </div>
+                        </div>
+                        <div class="chip-row">
+                            <span class="chip-label">Sugar</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip" data-sugar="25%">25%</button>
+                                <button class="chip active" data-sugar="50%">50%</button>
+                                <button class="chip" data-sugar="75%">75%</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 5. Spanish Latte -->
+            <article class="cart-card productCard" data-category="signature" data-base-price="175" data-title="Spanish Latte" data-type="coffee">
+                <div class="cart-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=800&q=80" alt="Spanish Latte" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Barista Pick</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Spanish Latte</h2>
+                            <span class="price-tag" data-base="175">₱175</span>
+                        </div>
+                        <p class="desc">Bold espresso sweetened with creamy condensed milk and a hint of cinnamon.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Size</span>
+                            <div class="chips size-chips">
+                                <button class="chip active" data-size="Regular" data-extra="0">Reg</button>
+                                <button class="chip" data-size="Large" data-extra="20">L (+₱20)</button>
+                                <button class="chip" data-size="Extra Large" data-extra="35">XL (+₱35)</button>
+                            </div>
+                        </div>
+                        <div class="chip-row">
+                            <span class="chip-label">Sweet</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip" data-sugar="Less Sweet">Less</button>
+                                <button class="chip active" data-sugar="Standard">Standard</button>
+                                <button class="chip" data-sugar="Extra Sweet">Extra</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 6. Iced Americano -->
+            <article class="cart-card productCard" data-category="signature" data-base-price="130" data-title="Iced Americano" data-type="coffee">
+                <div class="cart-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=800&q=80" alt="Iced Americano" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Classic</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Iced Americano</h2>
+                            <span class="price-tag" data-base="130">₱130</span>
+                        </div>
+                        <p class="desc">Double shot espresso poured over chilled mountain spring water and clear ice.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Size</span>
+                            <div class="chips size-chips">
+                                <button class="chip active" data-size="Regular" data-extra="0">Reg</button>
+                                <button class="chip" data-size="Large" data-extra="20">L (+₱20)</button>
+                                <button class="chip" data-size="Extra Large" data-extra="35">XL (+₱35)</button>
+                            </div>
+                        </div>
+                        <div class="chip-row">
+                            <span class="chip-label">Roast</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip active" data-sugar="Medium Dark">Medium</button>
+                                <button class="chip" data-sugar="Single Origin">Single Origin</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 7. Peach Hibiscus Tea -->
+            <article class="cart-card productCard" data-category="non-coffee" data-base-price="145" data-title="Peach Hibiscus Tea" data-type="tea">
+                <div class="cart-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=800&q=80" alt="Peach Hibiscus Tea" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Refreshing</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Peach Hibiscus Tea</h2>
+                            <span class="price-tag" data-base="145">₱145</span>
+                        </div>
+                        <p class="desc">Cold-brewed organic crimson hibiscus infused with ripe white peach nectar.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Size</span>
+                            <div class="chips size-chips">
+                                <button class="chip active" data-size="Regular" data-extra="0">Reg</button>
+                                <button class="chip" data-size="Large" data-extra="20">L (+₱20)</button>
+                            </div>
+                        </div>
+                        <div class="chip-row">
+                            <span class="chip-label">Sugar</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip" data-sugar="25%">25%</button>
+                                <button class="chip active" data-sugar="50%">50%</button>
+                                <button class="chip" data-sugar="100%">100%</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 8. French Butter Croissant -->
+            <article class="cart-card productCard" data-category="pastries" data-base-price="95" data-title="Butter Croissant" data-type="pastry">
+                <div class="cart-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80" alt="Butter Croissant" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Fresh Oven</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Butter Croissant</h2>
+                            <span class="price-tag" data-base="95">₱95</span>
+                        </div>
+                        <p class="desc">Golden flaky layered pastry made with imported French Normandy butter.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Serve</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip active" data-sugar="Warm Toasted">Warm Toast</button>
+                                <button class="chip" data-sugar="Room Temp">Room Temp</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 9. Pain au Chocolat -->
+            <article class="cart-card productCard" data-category="pastries" data-base-price="120" data-title="Pain au Chocolat" data-type="pastry">
+                <div class="cart-img-wrap">
+                    <img src="https://images.unsplash.com/photo-1608198093002-ad4e005484ec?auto=format&fit=crop&w=800&q=80" alt="Pain au Chocolat" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Belgian Dark</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Pain au Chocolat</h2>
+                            <span class="price-tag" data-base="120">₱120</span>
+                        </div>
+                        <p class="desc">Flaky artisan puff croissant wrapped around two batons of melted dark Belgian chocolate.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Serve</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip active" data-sugar="Warm Melty">Warm Melty</button>
+                                <button class="chip" data-sugar="Room Temp">Room Temp</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- 10. Apple Turnover -->
+            <article class="cart-card productCard" data-category="pastries" data-base-price="110" data-title="Spiced Apple Turnover" data-type="pastry">
+                <div class="cart-img-wrap">
+                    <img src="https://sallysbakingaddiction.com/wp-content/uploads/2013/09/homemade-apple-turnovers-2-600x600.jpg" alt="Apple Turnover" loading="lazy">
+                    <button class="heart" aria-label="Favorite"><i class="fa-regular fa-heart"></i></button>
+                    <span class="tag-badge">Warm Spiced</span>
+                </div>
+                <div class="cart-content">
+                    <div class="cart-info">
+                        <div class="name-row">
+                            <h2>Spiced Apple Turnover</h2>
+                            <span class="price-tag" data-base="110">₱110</span>
+                        </div>
+                        <p class="desc">Crisp puff pastry pocket filled with slow-simmered cinnamon Fuji apples & glaze.</p>
+                    </div>
+
+                    <div class="quick-custom-preview">
+                        <div class="chip-row">
+                            <span class="chip-label">Serve</span>
+                            <div class="chips sugar-chips">
+                                <button class="chip active" data-sugar="Warmed">Warmed</button>
+                                <button class="chip" data-sugar="Room Temp">Room Temp</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cart-actions">
+                        <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
+                            <i class="fa-solid fa-sliders"></i>
+                        </button>
+                        <div class="quantity">
+                            <button class="minus" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                            <span>1</span>
+                            <button class="plus" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="cart add-btn liquid-sheen">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button class="buy-now-btn liquid-sheen">
+                            <i class="fa-solid fa-bolt"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+    </main>
+
+    <!-- ============================================================
+         FLEXIBLE ITEM CUSTOMIZER MODAL (For both Menu & Cart Editing)
+    ============================================================ -->
+    <div class="customizer-modal-backdrop" id="customizerBackdrop"></div>
+    <div class="customizer-modal" id="customizerModal" role="dialog" aria-modal="true" aria-labelledby="customizerTitle">
+        <div class="customizer-header">
+            <div class="customizer-header-info">
+                <span class="customizer-tag">[ SLOW-BAR CUSTOMIZER ]</span>
+                <h2 id="customizerItemTitle">Caramel Macchiato</h2>
+            </div>
+            <button class="customizer-close-btn" id="customizerCloseBtn" aria-label="Close Customizer">&times;</button>
+        </div>
+
+        <div class="customizer-body">
+            <!-- Item Preview Banner -->
+            <div class="customizer-item-preview">
+                <img id="customizerItemImg" src="" alt="Selected Product">
+                <div class="customizer-preview-text">
+                    <p id="customizerItemDesc">Handcrafted specialty drink.</p>
+                    <div class="customizer-live-price">
+                        <span class="price-label">Unit Price:</span>
+                        <strong id="customizerLivePrice">₱165</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Size Selection -->
+            <div class="customizer-section" id="custSizeSection">
+                <div class="section-label-row">
+                    <label>Cup Size</label>
+                    <span class="badge-hint">Required</span>
+                </div>
+                <div class="customizer-options-grid" id="custSizeOptions">
+                    <button class="opt-btn active" data-type="size" data-val="Regular" data-price="0">
+                        <span class="opt-name">Regular</span>
+                        <span class="opt-price">Included</span>
+                    </button>
+                    <button class="opt-btn" data-type="size" data-val="Large" data-price="20">
+                        <span class="opt-name">Large</span>
+                        <span class="opt-price">+₱20</span>
+                    </button>
+                    <button class="opt-btn" data-type="size" data-val="Extra Large" data-price="35">
+                        <span class="opt-name">Extra Large</span>
+                        <span class="opt-price">+₱35</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Milk Selection (For drinks) -->
+            <div class="customizer-section" id="custMilkSection">
+                <div class="section-label-row">
+                    <label>Milk Choice</label>
+                    <span class="badge-hint">Customizable</span>
+                </div>
+                <div class="customizer-options-grid" id="custMilkOptions">
+                    <button class="opt-btn active" data-type="milk" data-val="Whole Milk" data-price="0">
+                        <span class="opt-name">Whole Milk</span>
+                        <span class="opt-price">Default</span>
+                    </button>
+                    <button class="opt-btn" data-type="milk" data-val="Oat Milk" data-price="25">
+                        <span class="opt-name">Oat Milk</span>
+                        <span class="opt-price">+₱25</span>
+                    </button>
+                    <button class="opt-btn" data-type="milk" data-val="Almond Milk" data-price="25">
+                        <span class="opt-name">Almond Milk</span>
+                        <span class="opt-price">+₱25</span>
+                    </button>
+                    <button class="opt-btn" data-type="milk" data-val="Non-Fat Milk" data-price="0">
+                        <span class="opt-name">Non-Fat Milk</span>
+                        <span class="opt-price">+₱0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sweetness / Sugar Level -->
+            <div class="customizer-section" id="custSugarSection">
+                <div class="section-label-row">
+                    <label>Sweetness Level</label>
+                </div>
+                <div class="customizer-options-grid" id="custSugarOptions">
+                    <button class="opt-btn" data-type="sugar" data-val="0%">0% (None)</button>
+                    <button class="opt-btn" data-type="sugar" data-val="25%">25% (Low)</button>
+                    <button class="opt-btn active" data-type="sugar" data-val="50%">50% (Standard)</button>
+                    <button class="opt-btn" data-type="sugar" data-val="75%">75% (Sweet)</button>
+                    <button class="opt-btn" data-type="sugar" data-val="100%">100% (Extra)</button>
+                </div>
+            </div>
+
+            <!-- Temperature / Ice Level -->
+            <div class="customizer-section" id="custIceSection">
+                <div class="section-label-row">
+                    <label>Temperature & Ice</label>
+                </div>
+                <div class="customizer-options-grid" id="custIceOptions">
+                    <button class="opt-btn active" data-type="ice" data-val="Regular Ice">Chilled (Regular Ice)</button>
+                    <button class="opt-btn" data-type="ice" data-val="Less Ice">Less Ice</button>
+                    <button class="opt-btn" data-type="ice" data-val="No Ice">No Ice</button>
+                    <button class="opt-btn" data-type="ice" data-val="Hot Steamed">Hot / Steamed Warm</button>
+                </div>
+            </div>
+
+            <!-- Bakery Serving Options (For Pastries) -->
+            <div class="customizer-section" id="custPastrySection" style="display: none;">
+                <div class="section-label-row">
+                    <label>Serving Preference</label>
+                </div>
+                <div class="customizer-options-grid" id="custPastryOptions">
+                    <button class="opt-btn active" data-type="serve" data-val="Warm Toasted">Warm Toasted</button>
+                    <button class="opt-btn" data-type="serve" data-val="Room Temp">Room Temperature</button>
+                    <button class="opt-btn" data-type="serve" data-val="Extra Crispy Toast">Extra Crispy Toast</button>
+                </div>
+            </div>
+
+            <!-- Add-ons / Enhancements -->
+            <div class="customizer-section" id="custAddonsSection">
+                <div class="section-label-row">
+                    <label>Extra Add-ons</label>
+                    <span class="badge-hint">Optional</span>
+                </div>
+                <div class="customizer-addons-list" id="custAddonsList">
+                    <label class="addon-checkbox-row">
+                        <input type="checkbox" data-name="Extra Espresso Shot" data-price="30">
+                        <span class="addon-info">
+                            <span class="addon-title">Extra Espresso Shot</span>
+                            <span class="addon-desc">Rich double-ristretto boost</span>
+                        </span>
+                        <span class="addon-cost">+₱30</span>
+                    </label>
+                    <label class="addon-checkbox-row">
+                        <input type="checkbox" data-name="Caramel Drizzle" data-price="15">
+                        <span class="addon-info">
+                            <span class="addon-title">Artisan Caramel Drizzle</span>
+                            <span class="addon-desc">Slow-cooked amber reduction</span>
+                        </span>
+                        <span class="addon-cost">+₱15</span>
+                    </label>
+                    <label class="addon-checkbox-row">
+                        <input type="checkbox" data-name="Vanilla Cold Foam" data-price="25">
+                        <span class="addon-info">
+                            <span class="addon-title">Vanilla Cold Foam</span>
+                            <span class="addon-desc">Velvety whipped sweet microfoam</span>
+                        </span>
+                        <span class="addon-cost">+₱25</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Barista Instruction Note -->
+            <div class="customizer-section">
+                <div class="section-label-row">
+                    <label for="custItemNote">Special Item Note</label>
+                </div>
+                <input type="text" id="custItemNote" class="customizer-input" placeholder="e.g. Extra hot, light foam, no cinnamon sprinkle">
+            </div>
+
+            <!-- Quantity Row in Customizer -->
+            <div class="customizer-qty-bar">
+                <span class="qty-label">Quantity:</span>
+                <div class="quantity customizer-qty">
+                    <button class="minus" id="custMinusBtn" aria-label="Decrease quantity"><i class="fa-solid fa-minus"></i></button>
+                    <span id="custQtyCount">1</span>
+                    <button class="plus" id="custPlusBtn" aria-label="Increase quantity"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="customizer-footer">
+            <button class="customizer-save-btn liquid-sheen" id="custSaveBtn">
+                <i class="fa-solid fa-check"></i> <span id="custSaveBtnText">Add to Food Cart — ₱165</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MINIMAL FOOD CART PAYMENT & CHECKOUT MODAL
+    ============================================================ -->
+    <div class="checkout-modal-backdrop" id="checkoutBackdrop"></div>
+    <div class="checkout-modal" id="checkoutModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <!-- View 1: Cart & Checkout Form -->
+        <div class="checkout-view" id="checkoutFormView">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-tag">[ FOOD CART CHECKOUT ]</span>
+                    <h2 id="modalTitle">Your Cart & Payment</h2>
+                </div>
+                <button class="modal-close-btn" id="modalCloseBtn" aria-label="Close Checkout">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Cart Items Section -->
+                <div class="modal-section">
+                    <div class="section-title-row">
+                        <h3>Selected Items (<span id="modalItemCount">0</span>)</h3>
+                        <button class="clear-cart-link" id="clearCartBtn">Clear all</button>
+                    </div>
+                    
+                    <div class="cart-items-list" id="cartItemsList">
+                        <!-- Dynamic Cart Item Cards rendered via JS -->
+                        <div class="empty-cart-state" id="emptyCartState">
+                            <div class="empty-cart-icon"><i class="fa-solid fa-mug-saucer"></i></div>
+                            <p class="empty-title">Your food cart is empty</p>
+                            <p class="empty-sub">Choose any delicious brew or fresh pastry to get started.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pickup / Dining Preference -->
+                <div class="modal-section" id="checkoutOptionsSection">
+                    <h3>Pickup Style</h3>
+                    <div class="dining-options">
+                        <label class="option-pill active">
+                            <input type="radio" name="pickupStyle" value="To-Go Cup & Bag" checked>
+                            <span><i class="fa-solid fa-bag-shopping"></i> To-Go / Takeaway</span>
+                        </label>
+                        <label class="option-pill">
+                            <input type="radio" name="pickupStyle" value="Dine-In Bench">
+                            <span><i class="fa-solid fa-mug-hot"></i> Dine-In Bench Cup</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Customer Info -->
+                <div class="modal-section" id="customerInfoSection">
+                    <h3>Customer Details</h3>
+                    <div class="form-grid">
+                        <div class="input-field">
+                            <label for="custName">Your Name</label>
+                            <input type="text" id="custName" placeholder="e.g. Min-ji or Alex" autocomplete="name">
+                        </div>
+                        <div class="input-field">
+                            <label for="custPhone">Mobile / Cart Buzzer #</label>
+                            <input type="tel" id="custPhone" placeholder="09XX-XXX-XXXX" autocomplete="tel">
+                        </div>
+                        <div class="input-field full-width">
+                            <label for="baristaNote">Barista Note (Optional)</label>
+                            <input type="text" id="baristaNote" placeholder="e.g. Less ice on drink 1, warm pastry first">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="modal-section" id="paymentMethodSection">
+                    <h3>Payment Method</h3>
+                    <div class="payment-methods-grid">
+                        <label class="payment-pill active" data-method="GCash / Maya">
+                            <input type="radio" name="paymentMethod" value="GCash / Maya" checked>
+                            <div class="pay-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                            <div class="pay-text">
+                                <span class="pay-name">GCash / Maya</span>
+                                <span class="pay-desc">Instant QR Payment</span>
+                            </div>
+                        </label>
+
+                        <label class="payment-pill" data-method="Cash on Pickup">
+                            <input type="radio" name="paymentMethod" value="Cash on Pickup">
+                            <div class="pay-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+                            <div class="pay-text">
+                                <span class="pay-name">Cash on Pick-up</span>
+                                <span class="pay-desc">Pay at Food Cart Counter</span>
+                            </div>
+                        </label>
+
+                        <label class="payment-pill" data-method="Card / Apple Pay">
+                            <input type="radio" name="paymentMethod" value="Card / Apple Pay">
+                            <div class="pay-icon"><i class="fa-solid fa-credit-card"></i></div>
+                            <div class="pay-text">
+                                <span class="pay-name">Card / Apple Pay</span>
+                                <span class="pay-desc">Contactless Tap</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Price Summary -->
+                <div class="modal-section price-summary-section" id="priceSummarySection">
+                    <div class="summary-line">
+                        <span>Items Subtotal</span>
+                        <span id="summarySubtotal">₱0</span>
+                    </div>
+                    <div class="summary-line">
+                        <span>Food Cart Eco-Packaging</span>
+                        <span class="free-pill">FREE</span>
+                    </div>
+                    <div class="summary-line total-line">
+                        <span>Total Due</span>
+                        <span class="total-price" id="summaryTotal">₱0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer with Animated Pay Button -->
+            <div class="modal-footer">
+                <button class="confirm-pay-btn liquid-sheen" id="confirmPayBtn">
+                    <span class="btn-text"><i class="fa-solid fa-lock"></i> Place Order & Pay <span id="payBtnAmount">₱0</span></span>
+                    <span class="btn-brewing-loader">
+                        <span class="mini-coffee-spinner"><i class="fa-solid fa-mug-hot"></i></span>
+                        <span class="loader-text">Grinding fresh beans & brewing...</span>
+                        <span class="loader-progress-bar"><span class="loader-bar-fill"></span></span>
+                    </span>
+                </button>
+            </div>
+        </div>
+
+        <!-- View 2: Minimal Digital Coffee Receipt (Appears after Buy Now animation) -->
+        <div class="receipt-view" id="receiptView">
+            <div class="receipt-card">
+                <!-- Top Notch / Claim Status Header -->
+                <div class="receipt-status-header">
+                    <div class="live-brew-badge">
+                        <span class="live-dot pulse"></span> BREWING AT FOOD CART
+                    </div>
+                    <span class="order-ticket-id" id="receiptTicketId">#KK-8291</span>
+                </div>
+
+                <div class="receipt-main">
+                    <div class="receipt-icon-wrap">
+                        <div class="cup-fill-animation">
+                            <span class="cup-icon"><i class="fa-solid fa-mug-hot"></i></span>
+                            <div class="steam-trails">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 class="receipt-headline">Order Placed Successfully!</h2>
+                    <p class="receipt-sub">Thank you, <strong id="receiptCustName">Coffee Lover</strong>! Your artisanal brew is being prepared right now at our food cart.</p>
+
+                    <!-- Estimated Pickup Box -->
+                    <div class="pickup-estimate-box">
+                        <div class="estimate-item">
+                            <span class="est-label">Est. Ready Time</span>
+                            <span class="est-value">~4 – 6 mins</span>
+                        </div>
+                        <div class="est-divider"></div>
+                        <div class="estimate-item">
+                            <span class="est-label">Order Type</span>
+                            <span class="est-value" id="receiptOrderType">To-Go</span>
+                        </div>
+                    </div>
+
+                    <!-- Live Progress Bar -->
+                    <div class="order-tracker">
+                        <div class="tracker-step done">
+                            <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+                            <span>Received</span>
+                        </div>
+                        <div class="tracker-line active"></div>
+                        <div class="tracker-step active">
+                            <div class="step-circle"><i class="fa-solid fa-fire-burner"></i></div>
+                            <span>Brewing</span>
+                        </div>
+                        <div class="tracker-line"></div>
+                        <div class="tracker-step">
+                            <div class="step-circle"><i class="fa-solid fa-box"></i></div>
+                            <span>Ready</span>
+                        </div>
+                    </div>
+
+                    <!-- Itemized Order Breakdown -->
+                    <div class="receipt-details">
+                        <div class="receipt-section-label">Order Summary</div>
+                        <div class="receipt-items" id="receiptItemsList">
+                            <!-- Populated dynamically -->
+                        </div>
+                        
+                        <div class="receipt-summary-totals">
+                            <div class="r-row">
+                                <span>Payment Method:</span>
+                                <strong id="receiptPaymentMethod">GCash (Paid)</strong>
+                            </div>
+                            <div class="r-row total">
+                                <span>Total Paid:</span>
+                                <strong id="receiptTotalPaid">₱0</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Simulated Claim Barcode / QR -->
+                    <div class="receipt-barcode-box">
+                        <div class="barcode-lines">
+                            <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                        </div>
+                        <span class="barcode-sub">Show this receipt or ticket number at food cart counter</span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="receipt-actions">
+                        <button class="receipt-btn secondary" id="downloadReceiptBtn">
+                            <i class="fa-solid fa-download"></i> Save Receipt
+                        </button>
+                        <button class="receipt-btn primary liquid-sheen" id="newOrderBtn">
+                            <i class="fa-solid fa-mug-hot"></i> Order Another Cup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="foodcart-footer">
+        <p>© 2026 KKEOPI Korean Food Cart & Specialty Bar • Slow Sips & Good Moments</p>
+    </footer>
+</body>
+</html>

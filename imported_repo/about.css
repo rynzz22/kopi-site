@@ -1,0 +1,49 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Inter, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+  color: white;
+}
+
+button{
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4b2f20;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    z-index: 1;
+}
+
+
+/* BACKGROUND */
+.left-side{
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle at top left,#F5E8D8,#E6C8A7);
+
+}
+
+
+.wave{
+    position:absolute;
+    right:-120px;
+    top:50%;
+    transform:translateY(-50%);
+    width:700px;
+    height:120%;
+    opacity:.95;
+    z-index:1;
+    pointer-events:none;
+
+}

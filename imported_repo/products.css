@@ -1,0 +1,1520 @@
+﻿/* ===========================
+   KKEOPI PRODUCTS PAGE
+   PART 1
+=========================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --cream: #f5e8d8;
+    --latte: #e6c8a7;
+    --coffee: #bb8c64;
+    --espresso: #6b4a35;
+    --dark: #4b2f20;
+
+    --glass: rgba(255, 255, 255, 0.18);
+    --glassBorder: rgba(255, 255, 255, 0.35);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--cream), var(--latte));
+    overflow-x: hidden;
+    color: var(--dark);
+    position: relative;
+}
+
+/* =====================
+BACKGROUND
+===================== */
+
+.background {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at top left, #fff9f4, var(--latte));
+    z-index: -5;
+}
+
+/* =====================
+MOUSE GLOW
+===================== */
+
+.mouseGlow {
+    position: fixed;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    filter: blur(100px);
+    pointer-events: none;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    transition: transform 0.15s linear;
+}
+
+/* =====================
+COFFEE WAVE
+===================== */
+
+.wave {
+    position: fixed;
+    right: -180px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 720px;
+    height: 120%;
+    pointer-events: none;
+    filter: drop-shadow(-30px 0 50px rgba(120, 70, 40, 0.12));
+    animation: waveFloat 12s ease-in-out infinite;
+}
+
+/* =====================
+NAVBAR
+===================== */
+
+nav {
+    position: sticky;
+    top: 25px;
+    width: min(1200px, 92%);
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 30px;
+    margin-top: 25px;
+    border-radius: 70px;
+    background: var(--glass);
+    backdrop-filter: blur(25px);
+    border: 1px solid var(--glassBorder);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.logo {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--espresso);
+}
+
+.navButtons button {
+    border: none;
+    padding: 14px 26px;
+    border-radius: 40px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #6b4a35, #8b654c);
+    color: white;
+    font-weight: 600;
+    transition: 0.35s;
+}
+
+.navButtons button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* =====================
+FLOATING CART
+===================== */
+
+.floatingCart {
+    position: fixed;
+    right: 35px;
+    bottom: 35px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: white;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    z-index: 999;
+    transition: 0.35s;
+}
+
+.floatingCart:hover {
+    transform: translateY(-6px) scale(1.05);
+}
+
+.floatingCart i {
+    font-size: 24px;
+    color: var(--espresso);
+}
+
+#cartCount {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #c0392b;
+    color: white;
+    font-size: 12px;
+}
+
+/* =====================
+HERO
+===================== */
+
+.hero {
+    width: min(1200px, 90%);
+    margin: 70px auto;
+    text-align: center;
+}
+
+.hero h1 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 68px;
+    color: var(--dark);
+}
+
+.hero p {
+    margin-top: 15px;
+    color: #6b4a35;
+    font-size: 18px;
+}
+
+/* =====================
+PRODUCT GRID
+===================== */
+
+.products {
+    width: min(1200px, 92%);
+    margin: auto;
+    display: grid;
+    gap: 35px;
+    padding-bottom: 120px;
+}
+
+/* =====================
+PRODUCT CARD
+===================== */
+
+.productCard {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glassBorder);
+    border-radius: 30px;
+    overflow: hidden;
+    transition: 0.4s;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.08);
+}
+
+.productCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.15);
+}
+
+/* =====================
+HEADER
+===================== */
+
+.productHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 35px;
+}
+
+.productHeader h2 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 40px;
+    color: var(--espresso);
+}
+
+.productHeader p {
+    margin-top: 8px;
+    color: #7c5a44;
+}
+
+.productHeader h3 {
+    font-size: 34px;
+    color: #5c3b2d;
+}
+
+/* =====================
+IMAGE
+===================== */
+
+.productCard img {
+    width: 100%;
+    height: 340px;
+    object-fit: cover;
+    display: block;
+    transition: 0.6s;
+}
+
+.productCard:hover img {
+    transform: scale(1.06);
+}
+
+/* =====================
+CUSTOMIZE BUTTON
+===================== */
+
+.expandButton {
+    width: calc(100% - 50px);
+    margin: 25px;
+    padding: 18px;
+    border: none;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #7b533d, #b98965);
+    color: white;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.35s;
+}
+
+.expandButton:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
+}
+
+/* ==========================================
+   PRODUCT CONTENT (Accordion)
+========================================== */
+
+.productContent {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.6s ease, padding 0.45s ease;
+    padding: 0 35px;
+}
+
+.productCard.active .productContent {
+    max-height: 1200px;
+    padding: 10px 35px 35px;
+}
+
+.productCard.active .expandButton i {
+    transform: rotate(180deg);
+}
+
+.expandButton i {
+    transition: 0.35s;
+    margin-left: 10px;
+}
+
+/* ==========================================
+   OPTIONS
+========================================== */
+
+.option {
+    margin-top: 30px;
+}
+
+.option h4 {
+    font-size: 18px;
+    color: var(--espresso);
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+/* ==========================================
+   CHIPS
+========================================== */
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.chip {
+    border: none;
+    padding: 12px 20px;
+    border-radius: 40px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.55);
+    color: var(--espresso);
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.chip:hover {
+    transform: translateY(-3px);
+    background: white;
+}
+
+.chip.active {
+    background: linear-gradient(135deg, #7b533d, #b98965);
+    color: white;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================
+   CHECKBOXES
+========================================== */
+
+.option label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    color: #5d4333;
+}
+
+.option input {
+    width: 18px;
+    height: 18px;
+    accent-color: #8b654c;
+}
+
+/* ==========================================
+   QUANTITY
+========================================== */
+
+.quantity {
+    margin-top: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+}
+
+.quantity button {
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    background: white;
+    color: var(--espresso);
+    font-size: 18px;
+    transition: 0.3s;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.quantity button:hover {
+    transform: scale(1.1);
+    background: #8b654c;
+    color: white;
+}
+
+.quantity span {
+    font-size: 22px;
+    font-weight: 700;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* ==========================================
+   ACTION BUTTONS
+========================================== */
+
+.actions {
+    margin-top: 35px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.actions button {
+    border: none;
+    border-radius: 18px;
+    padding: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.35s;
+}
+
+/* Heart */
+
+.heart {
+    background: white;
+    color: #c0392b;
+}
+
+.heart.active {
+    background: #ffebee;
+    color: #e53935;
+    animation: heartBeat 0.5s;
+}
+
+/* Save */
+
+.save {
+    background: #ece5dc;
+    color: var(--espresso);
+}
+
+/* Cart */
+
+.cart {
+    background: #7b533d;
+    color: white;
+}
+
+/* Buy */
+
+.buy {
+    background: linear-gradient(135deg, #b98965, #8b654c);
+    color: white;
+}
+
+/* Checkout */
+
+.checkout {
+    background: #4b2f20;
+    color: white;
+}
+
+/* Hover */
+
+.actions button:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* ==========================================
+   FOOTER
+========================================== */
+
+footer {
+    text-align: center;
+    padding: 50px;
+    color: #7b5c45;
+    font-size: 15px;
+}
+
+/* ==========================================
+   RIPPLE EFFECT
+========================================== */
+
+.actions button,
+.expandButton,
+.navButtons button {
+    position: relative;
+    overflow: hidden;
+}
+
+.actions button::after,
+.expandButton::after,
+.navButtons button::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    transition: 0.5s;
+}
+
+.actions button:hover::after,
+.expandButton:hover::after,
+.navButtons button:hover::after {
+    width: 320px;
+    height: 320px;
+}
+
+/* ==========================================
+   SCROLL ANIMATION
+========================================== */
+
+.productCard {
+    opacity: 0;
+    transform: translateY(40px);
+    animation: fadeUp 0.8s forwards;
+}
+
+.productCard:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.productCard:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+/* ==========================================
+   FLOATING SHADOW
+========================================== */
+
+.productCard::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+    background: linear-gradient(rgba(255, 255, 255, 0.18), transparent);
+    opacity: 0;
+    transition: 0.4s;
+    pointer-events: none;
+}
+
+.productCard:hover::before {
+    opacity: 1;
+}
+
+/* ==========================================
+   CUSTOM SCROLLBAR
+========================================== */
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #b98965;
+    border-radius: 20px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f4e8da;
+}
+
+/* ==========================================
+   ANIMATIONS
+========================================== */
+
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes waveFloat {
+    0% {
+        transform: translateY(-50%) translateX(0);
+    }
+
+    50% {
+        transform: translateY(-50%) translateX(-18px);
+    }
+
+    100% {
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+@keyframes heartBeat {
+    0% {
+        transform: scale(1);
+    }
+
+    30% {
+        transform: scale(1.35);
+    }
+
+    60% {
+        transform: scale(0.95);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 900px) {
+    .hero h1 {
+        font-size: 48px;
+    }
+
+    .productHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .productCard img {
+        height: 240px;
+    }
+
+    .actions {
+        grid-template-columns: 1fr;
+    }
+
+    nav {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .wave {
+        opacity: 0.18;
+        right: -320px;
+    }
+}
+
+@media (max-width: 600px) {
+    .hero {
+        margin-top: 40px;
+    }
+
+    .productHeader h2 {
+        font-size: 30px;
+    }
+
+    .expandButton {
+        width: calc(100% - 30px);
+        margin: 15px;
+    }
+
+    .productContent {
+        padding: 0 20px;
+    }
+
+    .productCard.active .productContent {
+        padding: 10px 20px 25px;
+    }
+}
+
+/* Toast */
+
+.toast {
+    position: fixed;
+    bottom: 35px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #4b2f20;
+    color: white;
+    padding: 15px 28px;
+    border-radius: 40px;
+    opacity: 0;
+    transition: 0.35s;
+    z-index: 9999;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Ripple */
+
+button {
+    overflow: hidden;
+    position: relative;
+}
+
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+.productHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 35px;
+}
+
+.productHeader h2 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 40px;
+    color: var(--espresso);
+}
+
+.productHeader p {
+    margin-top: 8px;
+    color: #7c5a44;
+}
+
+.productHeader h3 {
+    font-size: 34px;
+    color: #5c3b2d;
+}
+
+/* =====================
+IMAGE
+===================== */
+
+.productCard img{
+
+    width:100%;
+
+    height:340px;
+
+    object-fit:cover;
+
+    display:block;
+
+    transition:.6s;
+
+}
+
+.productCard:hover img{
+
+    transform:
+
+    scale(1.06);
+
+}
+
+/* =====================
+CUSTOMIZE BUTTON
+===================== */
+
+.expandButton{
+
+    width:calc(100% - 50px);
+
+    margin:25px;
+
+    padding:18px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:linear-gradient(
+    135deg,
+    #7B533D,
+    #B98965);
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.35s;
+
+}
+
+.expandButton:hover{
+
+    transform:
+
+    translateY(-4px);
+
+    box-shadow:
+
+    0 15px 35px rgba(0,0,0,.18);
+
+}
+
+/* ==========================================
+   PRODUCT CONTENT (Accordion)
+========================================== */
+
+.productContent{
+
+    max-height:0;
+
+    overflow:hidden;
+
+    transition:
+    max-height .6s ease,
+    padding .45s ease;
+
+    padding:0 35px;
+
+}
+
+.productCard.active .productContent{
+
+    max-height:1200px;
+
+    padding:10px 35px 35px;
+
+}
+
+.productCard.active .expandButton i{
+
+    transform:rotate(180deg);
+
+}
+
+.expandButton i{
+
+    transition:.35s;
+
+    margin-left:10px;
+
+}
+
+/* ==========================================
+   OPTIONS
+========================================== */
+
+.option{
+
+    margin-top:30px;
+
+}
+
+.option h4{
+
+    font-size:18px;
+
+    color:var(--espresso);
+
+    margin-bottom:15px;
+
+    font-weight:600;
+
+}
+
+/* ==========================================
+   CHIPS
+========================================== */
+
+.chips{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:12px;
+
+}
+
+.chip{
+
+    border:none;
+
+    padding:12px 20px;
+
+    border-radius:40px;
+
+    cursor:pointer;
+
+    background:rgba(255,255,255,.55);
+
+    color:var(--espresso);
+
+    font-weight:600;
+
+    transition:.3s;
+
+}
+
+.chip:hover{
+
+    transform:translateY(-3px);
+
+    background:white;
+
+}
+
+.chip.active{
+
+    background:linear-gradient(
+    135deg,
+    #7B533D,
+    #B98965);
+
+    color:white;
+
+    box-shadow:0 12px 25px rgba(0,0,0,.15);
+
+}
+
+/* ==========================================
+   CHECKBOXES
+========================================== */
+
+.option label{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:12px;
+
+    cursor:pointer;
+
+    color:#5d4333;
+
+}
+
+.option input{
+
+    width:18px;
+
+    height:18px;
+
+    accent-color:#8B654C;
+
+}
+
+/* ==========================================
+   QUANTITY
+========================================== */
+
+.quantity{
+
+    margin-top:35px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:18px;
+
+}
+
+.quantity button{
+
+    width:46px;
+
+    height:46px;
+
+    border:none;
+
+    border-radius:50%;
+
+    cursor:pointer;
+
+    background:white;
+
+    color:var(--espresso);
+
+    font-size:18px;
+
+    transition:.3s;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+.quantity button:hover{
+
+    transform:scale(1.1);
+
+    background:#8B654C;
+
+    color:white;
+
+}
+
+.quantity span{
+
+    font-size:22px;
+
+    font-weight:700;
+
+    min-width:40px;
+
+    text-align:center;
+
+}
+
+/* ==========================================
+   ACTION BUTTONS
+========================================== */
+
+.actions{
+
+    margin-top:35px;
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(150px,1fr));
+
+    gap:15px;
+
+}
+
+.actions button{
+
+    border:none;
+
+    border-radius:18px;
+
+    padding:15px;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+    transition:.35s;
+
+}
+
+/* Heart */
+
+.heart{
+
+    background:white;
+
+    color:#c0392b;
+
+}
+
+.heart.active{
+
+    background:#ffebee;
+
+    color:#e53935;
+
+    animation:heartBeat .5s;
+
+}
+
+/* Save */
+
+.save{
+
+    background:#ece5dc;
+
+    color:var(--espresso);
+
+}
+
+/* Cart */
+
+.cart{
+
+    background:#7B533D;
+
+    color:white;
+
+}
+
+/* Buy */
+
+.buy{
+
+    background:linear-gradient(
+    135deg,
+    #B98965,
+    #8B654C);
+
+    color:white;
+
+}
+
+/* Checkout */
+
+.checkout{
+
+    background:#4B2F20;
+
+    color:white;
+
+}
+
+/* Hover */
+
+.actions button:hover{
+
+    transform:translateY(-4px);
+
+    box-shadow:0 15px 30px rgba(0,0,0,.12);
+
+}
+
+/* ==========================================
+   FOOTER
+========================================== */
+
+footer{
+
+    text-align:center;
+
+    padding:50px;
+
+    color:#7b5c45;
+
+    font-size:15px;
+
+}
+
+/* ==========================================
+   RIPPLE EFFECT
+========================================== */
+
+.actions button,
+.expandButton,
+.navButtons button{
+
+    position:relative;
+
+    overflow:hidden;
+
+}
+
+.actions button::after,
+.expandButton::after,
+.navButtons button::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:0;
+
+    height:0;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.35);
+
+    left:50%;
+
+    top:50%;
+
+    transform:translate(-50%,-50%);
+
+    transition:.5s;
+
+}
+
+.actions button:hover::after,
+.expandButton:hover::after,
+.navButtons button:hover::after{
+
+    width:320px;
+
+    height:320px;
+
+}
+
+/* ==========================================
+   SCROLL ANIMATION
+========================================== */
+
+.productCard{
+
+    opacity:0;
+
+    transform:translateY(40px);
+
+    animation:fadeUp .8s forwards;
+
+}
+
+.productCard:nth-child(2){
+
+    animation-delay:.2s;
+
+}
+
+.productCard:nth-child(3){
+
+    animation-delay:.4s;
+
+}
+
+/* ==========================================
+   FLOATING SHADOW
+========================================== */
+
+.productCard::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    border-radius:30px;
+
+    background:linear-gradient(
+    rgba(255,255,255,.18),
+    transparent);
+
+    opacity:0;
+
+    transition:.4s;
+
+    pointer-events:none;
+
+}
+
+.productCard:hover::before{
+
+    opacity:1;
+
+}
+
+/* ==========================================
+   CUSTOM SCROLLBAR
+========================================== */
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#b98965;
+
+    border-radius:20px;
+
+}
+
+::-webkit-scrollbar-track{
+
+    background:#f4e8da;
+
+}
+
+/* ==========================================
+   ANIMATIONS
+========================================== */
+
+@keyframes fadeUp{
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+@keyframes waveFloat{
+
+    0%{
+
+        transform:
+        translateY(-50%)
+        translateX(0);
+
+    }
+
+    50%{
+
+        transform:
+        translateY(-50%)
+        translateX(-18px);
+
+    }
+
+    100%{
+
+        transform:
+        translateY(-50%)
+        translateX(0);
+
+    }
+
+}
+
+@keyframes heartBeat{
+
+    0%{
+
+        transform:scale(1);
+
+    }
+
+    30%{
+
+        transform:scale(1.35);
+
+    }
+
+    60%{
+
+        transform:scale(.95);
+
+    }
+
+    100%{
+
+        transform:scale(1);
+
+    }
+
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media(max-width:900px){
+
+.hero h1{
+
+font-size:48px;
+
+}
+
+.productHeader{
+
+flex-direction:column;
+
+align-items:flex-start;
+
+gap:15px;
+
+}
+
+.productCard img{
+
+height:240px;
+
+}
+
+.actions{
+
+grid-template-columns:1fr;
+
+}
+
+nav{
+
+flex-direction:column;
+
+gap:15px;
+
+}
+
+.wave{
+
+opacity:.18;
+
+right:-320px;
+
+}
+
+}
+
+@media(max-width:600px){
+
+.hero{
+
+margin-top:40px;
+
+}
+
+.productHeader h2{
+
+font-size:30px;
+
+}
+
+.expandButton{
+
+width:calc(100% - 30px);
+
+margin:15px;
+
+}
+
+.productContent{
+
+padding:0 20px;
+
+}
+
+.productCard.active .productContent{
+
+padding:10px 20px 25px;
+
+}
+
+}
+
+/* Toast */
+
+.toast{
+
+position:fixed;
+
+bottom:35px;
+
+left:50%;
+
+transform:translateX(-50%) translateY(100px);
+
+background:#4B2F20;
+
+color:white;
+
+padding:15px 28px;
+
+border-radius:40px;
+
+opacity:0;
+
+transition:.35s;
+
+z-index:9999;
+
+}
+
+.toast.show{
+
+opacity:1;
+
+transform:translateX(-50%) translateY(0);
+
+}
+
+/* Ripple */
+
+button{
+
+overflow:hidden;
+
+position:relative;
+
+}
+
+.ripple{
+
+position:absolute;
+
+border-radius:50%;
+
+background:rgba(255,255,255,.35);
+
+transform:scale(0);
+
+animation:ripple .6s linear;
+
+pointer-events:none;
+
+}
+
+@keyframes ripple{
+
+to{
+
+transform:scale(4);
+
+opacity:0;
+
+}
+
+}

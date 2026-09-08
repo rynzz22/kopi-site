@@ -1,0 +1,6 @@
+{
+  "name": "KKEOPI Coffee",
+  "description": "Artisanal Korean-inspired handcrafted coffee, specialty brews, fresh pastries, interactive drink customization, and seamless online ordering.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
