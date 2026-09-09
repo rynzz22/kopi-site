@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KKEOPI Coffee — Real-Time Order Tracker</title>
+
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+
+  <style>
+    :root {
+      --kopi-primary: #BB8C64;
+      --kopi-espresso: #301A0D;
+      --kopi-cream: #FDFBF7;
+    }
+
+    body {
+      background-color: #170E08;
+      color: #EFE7DD;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    .brand-font {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+
+    .tracker-card {
+      background: #23150D;
+      border: 1px solid rgba(187, 140, 100, 0.25);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Stepper Styling */
+    .step-timeline {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      margin: 40px 0 30px;
+    }
+
+    .step-timeline::before {
+      content: '';
+      position: absolute;
+      top: 24px;
+      left: 30px;
+      right: 30px;
+      height: 4px;
+      background: rgba(187, 140, 100, 0.2);
+      z-index: 1;
+    }
+
+    .step-timeline-progress {
+      position: absolute;
+      top: 24px;
+      left: 30px;
+      height: 4px;
+      background: linear-gradient(90deg, #BB8C64, #10B981);
+      z-index: 2;
+      transition: width 0.6s ease;
+      width: 0%;
+    }
+
+    .step-item {
+      position: relative;
+      z-index: 3;
+      text-align: center;
+      flex: 1;
+    }
+
+    .step-circle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #2D1B10;
+      border: 2px solid rgba(187, 140, 100, 0.3);
+      color: #8C5C38;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px;
+      font-size: 1.15rem;
+      transition: all 0.3s ease;
+    }
+
+    .step-item.active .step-circle {
+      background: #BB8C64;
+      border-color: #BB8C64;
+      color: #170E08;
+      box-shadow: 0 0 15px rgba(187, 140, 100, 0.6);
+      transform: scale(1.1);
+    }
+
+    .step-item.completed .step-circle {
+      background: #10B981;
+      border-color: #10B981;
+      color: #FFFFFF;
+    }
+
+    .step-label {
+      font-size: 0.85rem;
+      color: #9C8B7E;
+      font-weight: 500;
+    }
+
+    .step-item.active .step-label {
+      color: #FDFBF7;
+      font-weight: 600;
+    }
+
+    .status-alert-box {
+      border-radius: 12px;
+      padding: 16px 20px;
+      transition: all 0.3s;
+    }
+
+    .btn-kopi {
+      background: #BB8C64;
+      color: #170E08;
+      font-weight: 600;
+      border: none;
+    }
+    .btn-kopi:hover {
+      background: #cf9f75;
+      color: #170E08;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark bg-opacity-75 border-bottom border-secondary border-opacity-25 sticky-top px-3 py-2">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+        <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="rounded-circle" width="38" height="38" style="border: 1px solid #BB8C64;">
+        <span class="brand-font fs-4 fw-bold text-white">KKEOPI</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navContent">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-2">
+          <li class="nav-item"><a class="nav-link text-light" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link text-light" href="products.html">Coffee Menu</a></li>
+          <li class="nav-item"><a class="nav-link active text-warning fw-semibold" href="order-status.html">Live Tracker</a></li>
+          <li class="nav-item"><a class="nav-link text-light" href="about.html">About</a></li>
+          <li class="nav-item ms-lg-2">
+            <a href="admin.html" class="btn btn-sm btn-outline-warning rounded-pill px-3">
+              <i class="fa-solid fa-lock me-1"></i> Admin Portal
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Tracker Header -->
+  <div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <!-- Search Bar / Order ID Selector -->
+        <div class="d-flex flex-wrap gap-2 mb-4 justify-content-between align-items-center">
+          <div>
+            <h2 class="brand-font fs-2 text-white mb-1">Live Order Tracker</h2>
+            <p class="text-secondary small mb-0">Follow your brew from grind to pickup in real time.</p>
+          </div>
+
+          <form id="orderLookupForm" class="d-flex gap-2">
+            <input type="text" id="orderSearchInput" class="form-control form-control-sm bg-dark text-white border-secondary rounded-pill px-3" placeholder="Enter Order # (e.g. 1024)" style="width: 200px;">
+            <button type="submit" class="btn btn-sm btn-kopi rounded-pill px-3">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </form>
+        </div>
+
+        <!-- Real-Time Status Card -->
+        <div class="tracker-card p-4 mb-4" id="trackerMainCard">
+
+          <!-- Order Header -->
+          <div class="d-flex flex-wrap justify-content-between align-items-start border-bottom border-secondary border-opacity-25 pb-3 mb-4">
+            <div>
+              <span class="badge bg-warning text-dark fw-bold px-3 py-1 mb-2 fs-6" id="displayOrderId">Loading...</span>
+              <h4 class="text-white mb-1" id="displayCustomerName">Order Details</h4>
+              <p class="text-secondary small mb-0" id="displayPlacedTime">Placed at: --:--</p>
+            </div>
+
+            <div class="text-end">
+              <span class="badge bg-secondary px-3 py-2 fs-6 text-uppercase" id="displayCurrentStatus">PENDING</span>
+              <div class="small text-success mt-1 d-flex align-items-center gap-1 justify-content-end">
+                <i class="fa-solid fa-bolt"></i> Live Real-Time Feed
+              </div>
+            </div>
+          </div>
+
+          <!-- Stepper Progress -->
+          <div class="step-timeline">
+            <div class="step-timeline-progress" id="timelineProgressBar"></div>
+
+            <div class="step-item" id="step-pending">
+              <div class="step-circle"><i class="fa-regular fa-clipboard"></i></div>
+              <div class="step-label">Order Received</div>
+            </div>
+
+            <div class="step-item" id="step-confirmed">
+              <div class="step-circle"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="step-label">Confirmed</div>
+            </div>
+
+            <div class="step-item" id="step-preparing">
+              <div class="step-circle"><i class="fa-solid fa-fire-burner"></i></div>
+              <div class="step-label">Brewing / Prep</div>
+            </div>
+
+            <div class="step-item" id="step-ready">
+              <div class="step-circle"><i class="fa-solid fa-bell-concierge"></i></div>
+              <div class="step-label">Ready for Pickup</div>
+            </div>
+
+            <div class="step-item" id="step-completed">
+              <div class="step-circle"><i class="fa-solid fa-mug-hot"></i></div>
+              <div class="step-label">Completed</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Status Banner Message -->
+          <div class="status-alert-box bg-dark border border-secondary border-opacity-25 text-center my-4" id="statusMessageBanner">
+            <div class="spinner-border spinner-border-sm text-warning me-2"></div>
+            Connecting to live barista station...
+          </div>
+
+          <!-- Items Ordered Breakdown -->
+          <div class="bg-black bg-opacity-40 p-3 rounded-3 border border-secondary border-opacity-10 mb-3">
+            <h6 class="text-secondary small text-uppercase fw-semibold mb-3">Items Ordered</h6>
+            <div id="orderItemsList">
+              <!-- Dynamically rendered -->
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top border-secondary border-opacity-25">
+              <span class="text-secondary">Total Paid / Due</span>
+              <span class="fs-4 fw-bold text-white" id="displayTotalAmount">₱0</span>
+            </div>
+          </div>
+
+          <div class="text-center pt-2">
+            <a href="products.html" class="btn btn-outline-light btn-sm rounded-pill px-4">
+              <i class="fa-solid fa-plus me-1"></i> Order More Coffee
+            </a>
+          </div>
+
+        </div>
+
+        <!-- Recent Customer Orders Section -->
+        <div class="card bg-dark border-secondary border-opacity-25 rounded-3 p-4">
+          <h5 class="text-white brand-font fs-4 mb-3"><i class="fa-solid fa-clock-rotate-left text-warning me-2"></i>Your Recent Orders</h5>
+          <div id="recentOrdersContainer">
+            <p class="text-secondary small">Looking up your orders...</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/kopi-client.js"></script>
+  <script src="assets/order-status.js"></script>
+</body>
+</html>

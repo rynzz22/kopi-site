@@ -1,0 +1,206 @@
+{
+  "users": [
+    {
+      "id": "a0000000-0000-4000-8000-000000000001",
+      "name": "Barista Admin",
+      "email": "admin@kkeopi.com",
+      "profile_image": "https://api.dicebear.com/7.x/bottts/svg?seed=kkeopi_barista",
+      "role": "ADMIN",
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:58:37.241Z"
+    },
+    {
+      "id": "b1285493-5473-4556-9b16-e4ffba29a281",
+      "name": "Min-ji Kim",
+      "email": "minji.kim@gmail.com",
+      "profile_image": "https://api.dicebear.com/7.x/adventurer/svg?seed=Min-ji%20Kim",
+      "role": "CUSTOMER",
+      "created_at": "2026-09-08T23:41:26.180Z",
+      "updated_at": "2026-09-08T23:41:26.180Z"
+    },
+    {
+      "id": "c0326462-850f-48d6-95b8-50fa71ad7136",
+      "name": "Kate Lorene",
+      "email": "obenakatelorene@gmail.com",
+      "profile_image": "https://api.dicebear.com/7.x/adventurer/svg?seed=Kate%20Lorene",
+      "role": "CUSTOMER",
+      "created_at": "2026-09-08T23:57:44.304Z",
+      "updated_at": "2026-09-08T23:57:44.304Z"
+    },
+    {
+      "id": "c892c138-0000-4000-8000-000000000002",
+      "name": "Juan Dela Cruz",
+      "email": "juan.delacruz@gmail.com",
+      "profile_image": "https://api.dicebear.com/7.x/adventurer/svg?seed=Juan",
+      "role": "CUSTOMER",
+      "created_at": "2026-09-08T23:58:55.807Z",
+      "updated_at": "2026-09-08T23:58:55.807Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "iced-latte",
+      "name": "Iced Latte",
+      "description": "Rich espresso poured over chilled silky milk and crystal clear ice cubes.",
+      "price": 120,
+      "image": "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=800&q=80",
+      "category": "Coffee",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.711Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "spanish-latte",
+      "name": "Spanish Latte",
+      "description": "Double espresso combined with fresh textured milk and sweet condensed milk drizzle.",
+      "price": 140,
+      "image": "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=800&q=80",
+      "category": "Coffee",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "matcha-latte",
+      "name": "Matcha Latte",
+      "description": "Ceremonial grade Uji Japanese matcha whisked with silky milk and gentle sweetness.",
+      "price": 130,
+      "image": "https://cdn.shopify.com/s/files/1/0560/1699/4381/files/unnamed-1_1024x1024_a794ea7e-13eb-4360-9b3b-96cd7c8c3113.webp?v=1782242740",
+      "category": "Non-Coffee",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "caramel-macchiato",
+      "name": "Caramel Macchiato",
+      "description": "Velvety milk infused with vanilla, marked with dark espresso and golden caramel drizzle.",
+      "price": 165,
+      "image": "https://frostingandfettuccine.com/wp-content/uploads/2022/12/Caramel-Iced-Coffee-6.jpg",
+      "category": "Coffee",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "hazelnut-latte",
+      "name": "Hazelnut Latte",
+      "description": "Smooth espresso blended with slow-roasted hazelnut cream and velvety microfoam.",
+      "price": 170,
+      "image": "https://i.pinimg.com/736x/ca/73/28/ca732820d569e6c2a5d3f7ee340ab848.jpg",
+      "category": "Coffee",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "iced-americano",
+      "name": "Iced Americano",
+      "description": "Iconic Korean cafe staple: crisp iced double shot of high-altitude Arabica blend.",
+      "price": 110,
+      "image": "https://images.unsplash.com/photo-1551030173-122aabc4489c?auto=format&fit=crop&w=800&q=80",
+      "category": "Coffee",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "strawberry-cream-latte",
+      "name": "Strawberry Cream Latte",
+      "description": "Chuncheon strawberry compote with real fruit chunks topped with creamy milk and cold foam.",
+      "price": 155,
+      "image": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=800&q=80",
+      "category": "Non-Coffee",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "butter-croissant",
+      "name": "Artisan Butter Croissant",
+      "description": "Flaky, 36-layer French butter croissant baked fresh every morning with golden crumb.",
+      "price": 95,
+      "image": "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=800&q=80",
+      "category": "Pastries",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "apple-turnover",
+      "name": "Spiced Apple Turnover",
+      "description": "Crisp puff pastry pocket filled with slow-simmered cinnamon Fuji apples and raw sugar glaze.",
+      "price": 110,
+      "image": "https://sallysbakingaddiction.com/wp-content/uploads/2013/09/homemade-apple-turnovers-2-600x600.jpg",
+      "category": "Pastries",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "pain-au-chocolat",
+      "name": "Pain au Chocolat",
+      "description": "Buttery laminated pastry dough folded around double batons of 70% dark Valrhona chocolate.",
+      "price": 105,
+      "image": "https://images.unsplash.com/photo-1530610476181-d83430b64dcd?auto=format&fit=crop&w=800&q=80",
+      "category": "Pastries",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    },
+    {
+      "id": "peach-hibiscus-tea",
+      "name": "Peach Hibiscus Tea",
+      "description": "Cold-brewed Egyptian hibiscus infused with sweet white peach puree and edible blossoms.",
+      "price": 145,
+      "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=800&q=80",
+      "category": "Non-Coffee",
+      "is_available": true,
+      "created_at": "2026-09-08T23:30:40.712Z",
+      "updated_at": "2026-09-08T23:30:40.712Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1025,
+      "user_id": "c0326462-850f-48d6-95b8-50fa71ad7136",
+      "customer_name": "Kate Lorene",
+      "customer_email": "obenakatelorene@gmail.com",
+      "status": "READY",
+      "total_amount": 140,
+      "notes": "Less ice, oat milk",
+      "items": [
+        {
+          "product_id": "spanish-latte",
+          "product_name": "Spanish Latte",
+          "quantity": 1,
+          "price": 140,
+          "subtotal": 140
+        }
+      ],
+      "created_at": "2026-09-08T23:57:49.079Z",
+      "updated_at": "2026-09-09T03:16:27.763Z"
+    },
+    {
+      "id": 1024,
+      "user_id": "b1285493-5473-4556-9b16-e4ffba29a281",
+      "customer_name": "Min-ji Kim",
+      "customer_email": "minji.kim@gmail.com",
+      "status": "COMPLETED",
+      "total_amount": 240,
+      "notes": "Oat milk please",
+      "items": [
+        {
+          "product_id": "iced-latte",
+          "product_name": "Iced Latte",
+          "quantity": 2,
+          "price": 120,
+          "subtotal": 240
+        }
+      ],
+      "created_at": "2026-09-08T23:41:35.744Z",
+      "updated_at": "2026-09-08T23:56:36.290Z"
+    }
+  ],
+  "nextOrderId": 1026
+}

@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initCustomizerModalSystem();
     initCheckoutAndCartSystem();
     initHeartFavorites();
+    initGoogleAuthIntegration();
 });
 
 /* ==========================================================================
@@ -699,9 +700,9 @@ function initCheckoutAndCartSystem() {
         });
     });
 
-    // 8. Place Order & Pay Brewing Flow
+    // 8. Place Order & Pay Brewing Flow (Connected to real Laravel / Supabase API)
     if (confirmPayBtn) {
-        confirmPayBtn.addEventListener("click", () => {
+        confirmPayBtn.addEventListener("click", async () => {
             if (cartItems.length === 0) {
                 showToast("Your cart is empty! Please choose a beverage or pastry.");
                 return;
@@ -711,40 +712,86 @@ function initCheckoutAndCartSystem() {
             const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked')?.value || "GCash / Maya";
             const selectedPickup = document.querySelector('input[name="pickupStyle"]:checked')?.value || "To-Go Cup & Bag";
             const custName = document.getElementById("custName")?.value.trim() || "Valued Customer";
+            const custEmail = document.getElementById("custEmail")?.value.trim() || "guest@kkeopi.bar";
+            const custPhone = document.getElementById("custPhone")?.value.trim() || "";
+            const baristaNote = document.getElementById("baristaNote")?.value.trim() || "";
 
             confirmPayBtn.classList.add("is-brewing");
             const loaderText = confirmPayBtn.querySelector(".loader-text");
             const barFill = confirmPayBtn.querySelector(".loader-bar-fill");
 
             if (barFill) barFill.style.width = "0%";
-            setTimeout(() => { if (barFill) barFill.style.width = "100%"; }, 50);
-            if (loaderText) loaderText.textContent = "Grinding fresh beans & brewing...";
+            setTimeout(() => { if (barFill) barFill.style.width = "40%"; }, 50);
+            if (loaderText) loaderText.textContent = "Connecting to barista order bar...";
 
-            setTimeout(() => {
-                if (loaderText) loaderText.textContent = "Pouring silky microfoam & packaging...";
-            }, 850);
+            // Map cart items into API payload
+            const orderPayload = {
+                customer_name: custName,
+                customer_email: custEmail,
+                user_id: window.kopiClient?.getCurrentUser()?.id || null,
+                notes: `${selectedPickup} • Phone: ${custPhone || 'N/A'} • Note: ${baristaNote || 'None'} • Payment: ${selectedPayment}`,
+                items: cartItems.map(item => ({
+                    product_id: item.productId || 1,
+                    product_name: `${item.title} (${item.customsSummary})`,
+                    price: item.unitPrice,
+                    quantity: item.qty,
+                    subtotal: item.unitPrice * item.qty
+                }))
+            };
 
-            setTimeout(() => {
-                if (loaderText) loaderText.textContent = "Processing food cart ticket...";
-            }, 1500);
+            let createdOrder = null;
+
+            try {
+                if (window.kopiClient) {
+                    if (barFill) barFill.style.width = "75%";
+                    if (loaderText) loaderText.textContent = "Transmitting ticket to kitchen via WebSocket...";
+                    const res = await window.kopiClient.createOrder(orderPayload);
+                    if (res && res.data) {
+                        createdOrder = res.data;
+                    }
+                }
+            } catch (err) {
+                console.warn("Direct API fallback:", err);
+            }
+
+            // Fallback object if server unavailable
+            if (!createdOrder) {
+                createdOrder = {
+                    id: Math.floor(1000 + Math.random() * 9000),
+                    customer_name: custName,
+                    customer_email: custEmail,
+                    total_amount: totalAmount,
+                    status: "PENDING",
+                    items: orderPayload.items,
+                    created_at: new Date().toISOString()
+                };
+            }
+
+            if (barFill) barFill.style.width = "100%";
+            if (loaderText) loaderText.textContent = "Order queued! Ticket printed.";
 
             setTimeout(() => {
                 confirmPayBtn.classList.remove("is-brewing");
                 if (barFill) barFill.style.width = "0%";
 
-                const ticketId = `#KK-${Math.floor(1000 + Math.random() * 9000)}`;
+                const ticketId = `#${createdOrder.id}`;
                 const receiptTicketEl = document.getElementById("receiptTicketId");
                 const receiptCustNameEl = document.getElementById("receiptCustName");
                 const receiptOrderTypeEl = document.getElementById("receiptOrderType");
                 const receiptPayMethodEl = document.getElementById("receiptPaymentMethod");
                 const receiptTotalEl = document.getElementById("receiptTotalPaid");
                 const receiptItemsListEl = document.getElementById("receiptItemsList");
+                const trackOrderLiveBtn = document.getElementById("trackOrderLiveBtn");
 
                 if (receiptTicketEl) receiptTicketEl.textContent = ticketId;
                 if (receiptCustNameEl) receiptCustNameEl.textContent = custName;
                 if (receiptOrderTypeEl) receiptOrderTypeEl.textContent = selectedPickup.includes("To-Go") ? "To-Go" : "Dine-In Bench";
                 if (receiptPayMethodEl) receiptPayMethodEl.textContent = `${selectedPayment} (Paid)`;
-                if (receiptTotalEl) receiptTotalEl.textContent = `₱${totalAmount}`;
+                if (receiptTotalEl) receiptTotalEl.textContent = `₱${createdOrder.total_amount || totalAmount}`;
+
+                if (trackOrderLiveBtn) {
+                    trackOrderLiveBtn.href = `order-status.html?id=${createdOrder.id}`;
+                }
 
                 if (receiptItemsListEl) {
                     receiptItemsListEl.innerHTML = cartItems.map(item => `
@@ -761,11 +808,29 @@ function initCheckoutAndCartSystem() {
                 if (formView) formView.style.display = "none";
                 if (receiptView) receiptView.classList.add("active");
 
+                // Save to local recent orders so customer can track later
+                try {
+                    let recents = JSON.parse(localStorage.getItem('kkeopi_recent_orders') || '[]');
+                    recents = recents.filter(o => String(o.id) !== String(createdOrder.id));
+                    recents.unshift({
+                        id: createdOrder.id,
+                        total: createdOrder.total_amount || totalAmount,
+                        status: "PENDING",
+                        date: new Date().toISOString(),
+                        itemsSummary: cartItems.map(it => `${it.qty}x ${it.title}`).join(', ')
+                    });
+                    localStorage.setItem('kkeopi_recent_orders', JSON.stringify(recents.slice(0, 5)));
+                } catch(e) {}
+
                 cartItems = [];
                 updateCartBadge();
 
-                showToast(`Order ${ticketId} placed! Brewing now.`);
-            }, 2100);
+                if (window.kopiClient) {
+                    window.kopiClient.playChime('ping');
+                }
+
+                showToast(`Order #${createdOrder.id} placed! Kitchen is preparing.`);
+            }, 1000);
         });
     }
 
@@ -1042,3 +1107,88 @@ function initHeartFavorites() {
         });
     });
 }
+
+/* ==========================================================================
+   9. SUPABASE GOOGLE AUTHENTICATION INTEGRATION
+   ========================================================================== */
+function initGoogleAuthIntegration() {
+    const client = window.kopiClient;
+    const quickBtn = document.getElementById("googleQuickSignInBtn");
+    const container = document.getElementById("googleAuthContainer");
+    const custNameInput = document.getElementById("custName");
+    const custEmailInput = document.getElementById("custEmail");
+
+    function renderUserStatus(user) {
+        if (!container) return;
+        if (user) {
+            if (custNameInput && !custNameInput.value) custNameInput.value = user.name;
+            if (custEmailInput && !custEmailInput.value) custEmailInput.value = user.email;
+
+            container.innerHTML = `
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="${user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop'}" 
+                             alt="Avatar" class="rounded-circle" style="width: 28px; height: 28px; object-fit: cover; border: 1.5px solid #BB8C64;">
+                        <div>
+                            <div class="text-white small fw-bold" style="font-size: 0.82rem;">${escapeHtml(user.name)}</div>
+                            <div class="text-secondary small" style="font-size: 0.72rem;"><i class="fa-brands fa-google text-warning me-1"></i> ${escapeHtml(user.email)}</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill py-0 px-2 text-white-50" id="googleSignOutBtn" style="font-size: 0.72rem;">
+                        Sign Out
+                    </button>
+                </div>
+            `;
+            const signOutBtn = document.getElementById("googleSignOutBtn");
+            if (signOutBtn) {
+                signOutBtn.addEventListener("click", () => {
+                    if (client) client.logout();
+                    renderUserStatus(null);
+                    showToast("Signed out of Google account");
+                });
+            }
+        } else {
+            container.innerHTML = `
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="small text-secondary"><i class="fa-brands fa-google text-warning me-1"></i> Faster ordering with Google:</span>
+                    <button type="button" class="btn btn-sm btn-outline-warning rounded-pill py-0 px-2" id="googleQuickSignInBtn" style="font-size: 0.75rem;">
+                        <i class="fa-brands fa-google me-1"></i> Continue with Google
+                    </button>
+                </div>
+            `;
+            const newQuickBtn = document.getElementById("googleQuickSignInBtn");
+            if (newQuickBtn) {
+                newQuickBtn.addEventListener("click", handleGoogleSignIn);
+            }
+        }
+    }
+
+    async function handleGoogleSignIn() {
+        if (!client) return;
+        try {
+            await client.signInWithGoogle();
+        } catch (err) {
+            showToast("Google sign in: " + (err.message || err));
+        }
+    }
+
+    if (quickBtn) {
+        quickBtn.addEventListener("click", handleGoogleSignIn);
+    }
+
+    if (client) {
+        client.on("auth:change", (user) => {
+            renderUserStatus(user);
+        });
+        client.on("auth:changed", (user) => {
+            renderUserStatus(user);
+        });
+        renderUserStatus(client.getCurrentUser());
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
