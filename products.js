@@ -23,6 +23,7 @@ let cartItems = [];
 let activeCustomizerState = {
     mode: "add", // "add" or "edit"
     cartIndex: -1,
+    productId: "",
     basePrice: 150,
     title: "",
     category: "signature",
@@ -40,6 +41,31 @@ let activeCustomizerState = {
     note: "",
     qty: 1
 };
+
+function resolveProductId(card, titleFallback = "") {
+    if (card) {
+        const attrId = card.getAttribute("data-product-id");
+        if (attrId) return attrId.trim();
+    }
+    const rawTitle = (titleFallback || card?.getAttribute("data-title") || card?.querySelector("h2")?.textContent || "").toLowerCase().trim();
+    const map = {
+        "caramel macchiato": "caramel-macchiato",
+        "hazelnut latte": "hazelnut-latte",
+        "matcha latte": "matcha-latte",
+        "strawberry cream latte": "strawberry-cream-latte",
+        "spanish latte": "spanish-latte",
+        "iced americano": "iced-americano",
+        "iced latte": "iced-latte",
+        "peach hibiscus tea": "peach-hibiscus-tea",
+        "butter croissant": "butter-croissant",
+        "artisan butter croissant": "butter-croissant",
+        "pain au chocolat": "pain-au-chocolat",
+        "spiced apple turnover": "apple-turnover",
+        "apple turnover": "apple-turnover"
+    };
+    if (map[rawTitle]) return map[rawTitle];
+    return rawTitle.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "iced-latte";
+}
 
 /* ==========================================================================
    1. LIQUID CANVAS RIPPLE EFFECT
@@ -372,6 +398,7 @@ function initCustomizerModalSystem() {
 
 function openCustomizerForCard(card) {
     const title = card.getAttribute("data-title") || card.querySelector("h2")?.textContent || "Drink";
+    const productId = resolveProductId(card, title);
     const basePrice = parseInt(card.getAttribute("data-base-price") || "150", 10);
     const category = card.getAttribute("data-category") || "signature";
     const type = card.getAttribute("data-type") || (category === "pastries" ? "pastry" : "coffee");
@@ -391,6 +418,7 @@ function openCustomizerForCard(card) {
     activeCustomizerState = {
         mode: "add",
         cartIndex: -1,
+        productId,
         basePrice,
         title,
         category,
@@ -420,6 +448,7 @@ function openCustomizerForCartItem(index) {
     activeCustomizerState = {
         mode: "edit",
         cartIndex: index,
+        productId: item.productId || resolveProductId(null, item.title),
         basePrice: item.basePrice || item.unitPrice,
         title: item.title,
         category: item.category || "signature",
@@ -571,6 +600,7 @@ function saveCustomizerState() {
 
     const cartItem = {
         id: `${activeCustomizerState.title}-${customsSummary}`,
+        productId: activeCustomizerState.productId || resolveProductId(null, activeCustomizerState.title),
         title: activeCustomizerState.title,
         basePrice: activeCustomizerState.basePrice,
         unitPrice: unitPrice,
@@ -711,10 +741,17 @@ function initCheckoutAndCartSystem() {
             const totalAmount = calculateCartTotal();
             const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked')?.value || "GCash / Maya";
             const selectedPickup = document.querySelector('input[name="pickupStyle"]:checked')?.value || "To-Go Cup & Bag";
-            const custName = document.getElementById("custName")?.value.trim() || "Valued Customer";
-            const custEmail = document.getElementById("custEmail")?.value.trim() || "guest@kkeopi.bar";
+            const custNameInput = document.getElementById("custName");
+            const custName = custNameInput?.value.trim() || "";
+            const custEmail = document.getElementById("custEmail")?.value.trim() || "";
             const custPhone = document.getElementById("custPhone")?.value.trim() || "";
             const baristaNote = document.getElementById("baristaNote")?.value.trim() || "";
+
+            if (!custName) {
+                showToast("Please enter your Buyer Name to place your order.");
+                if (custNameInput) custNameInput.focus();
+                return;
+            }
 
             confirmPayBtn.classList.add("is-brewing");
             const loaderText = confirmPayBtn.querySelector(".loader-text");
@@ -727,11 +764,11 @@ function initCheckoutAndCartSystem() {
             // Map cart items into API payload
             const orderPayload = {
                 customer_name: custName,
-                customer_email: custEmail,
+                customer_email: custEmail || null,
                 user_id: window.kopiClient?.getCurrentUser()?.id || null,
                 notes: `${selectedPickup} • Phone: ${custPhone || 'N/A'} • Note: ${baristaNote || 'None'} • Payment: ${selectedPayment}`,
                 items: cartItems.map(item => ({
-                    product_id: item.productId || 1,
+                    product_id: item.productId || resolveProductId(null, item.title),
                     product_name: `${item.title} (${item.customsSummary})`,
                     price: item.unitPrice,
                     quantity: item.qty,
@@ -746,12 +783,17 @@ function initCheckoutAndCartSystem() {
                     if (barFill) barFill.style.width = "75%";
                     if (loaderText) loaderText.textContent = "Transmitting ticket to kitchen via WebSocket...";
                     const res = await window.kopiClient.createOrder(orderPayload);
-                    if (res && res.data) {
+                    if (res && res.success && res.data) {
                         createdOrder = res.data;
+                    } else if (res && res.error) {
+                        confirmPayBtn.classList.remove("is-brewing");
+                        if (barFill) barFill.style.width = "0%";
+                        showToast(res.error);
+                        return;
                     }
                 }
             } catch (err) {
-                console.warn("Direct API fallback:", err);
+                console.warn("Order API error:", err);
             }
 
             // Fallback object if server unavailable
@@ -859,6 +901,7 @@ function initCheckoutAndCartSystem() {
 
 function extractQuickCardData(card) {
     const title = card.getAttribute("data-title") || card.querySelector("h2")?.textContent || "Specialty Drink";
+    const productId = resolveProductId(card, title);
     const basePrice = parseInt(card.getAttribute("data-base-price") || "150", 10);
     const category = card.getAttribute("data-category") || "signature";
     const type = card.getAttribute("data-type") || (category === "pastries" ? "pastry" : "coffee");
@@ -889,6 +932,7 @@ function extractQuickCardData(card) {
 
     return {
         id: `${title}-${customsSummary}`,
+        productId,
         title,
         basePrice,
         unitPrice,

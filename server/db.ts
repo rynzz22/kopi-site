@@ -30,7 +30,7 @@ export interface OrderItem {
   product_id: string;
   product_name: string;
   product_price: number;
-  price?: number; // Kept for backwards compatibility
+  price: number;
   quantity: number;
   subtotal: number;
   created_at?: string;
@@ -57,7 +57,7 @@ export interface Order {
   updated_at: string;
 }
 
-// Initial Seed Products
+// Initial Seed Products (Matches the 4-table Supabase schema)
 const SEED_PRODUCTS: Product[] = [
   {
     id: 'iced-latte',
@@ -182,6 +182,14 @@ const SEED_PRODUCTS: Product[] = [
   },
 ];
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 class DatabaseService {
   private supabase: SupabaseClient | null = null;
   private isSupabaseConnected = false;
@@ -216,12 +224,65 @@ class DatabaseService {
     this.initSupabase();
   }
 
-  private sanitizeSupabaseUrl(rawUrl?: string): string | null {
-    if (!rawUrl || typeof rawUrl !== 'string') return null;
-    let url = rawUrl.trim();
-    // Strip trailing /rest/v1 or /rest/v1/ or /rest
-    url = url.replace(/\/rest\/v1\/?$/i, '').replace(/\/rest\/?$/i, '').replace(/\/+$/, '');
-    return url.startsWith('http') ? url : null;
+  private sanitizeSecret(raw?: string): string {
+    if (!raw || typeof raw !== 'string') return '';
+    return raw.trim().replace(/^['"]+|['"]+$/g, '').trim();
+  }
+
+  public sanitizeSupabaseUrl(rawUrl?: string): string | null {
+    const cleaned = this.sanitizeSecret(rawUrl);
+    if (!cleaned) return null;
+
+    // Ignore placeholder values
+    if (
+      cleaned.startsWith('MY_') ||
+      cleaned.includes('your-project') ||
+      cleaned.includes('example.com') ||
+      cleaned === 'undefined' ||
+      cleaned === 'null'
+    ) {
+      return null;
+    }
+
+    // Handle case where user pasted Supabase dashboard URL: https://supabase.com/dashboard/project/<project-ref>
+    const dashMatch = cleaned.match(/supabase\.com\/dashboard\/project\/([a-z0-9]+)/i);
+    if (dashMatch && dashMatch[1]) {
+      return `https://${dashMatch[1]}.supabase.co`;
+    }
+
+    let url = cleaned
+      .replace(/\/rest\/v1\/?$/i, '')
+      .replace(/\/rest\/?$/i, '')
+      .replace(/\/+$/, '');
+
+    if (!/^https?:\/\//i.test(url)) {
+      if (/^[a-z0-9-]+\.supabase\.co$/i.test(url)) {
+        url = `https://${url}`;
+      } else {
+        return null;
+      }
+    }
+
+    try {
+      const parsed = new URL(url);
+      if (!parsed.hostname || !parsed.hostname.includes('.')) return null;
+      return parsed.origin;
+    } catch {
+      return null;
+    }
+  }
+
+  public getPublicSupabaseConfig() {
+    const url = this.sanitizeSupabaseUrl(process.env.SUPABASE_URL);
+    const anonKey = this.sanitizeSecret(process.env.SUPABASE_ANON_KEY);
+    // Only expose client config if backend verified connectivity or valid URL+key exist
+    if (!url || !anonKey || anonKey.startsWith('MY_')) {
+      return { supabaseUrl: '', supabaseAnonKey: '' };
+    }
+    return {
+      supabaseUrl: url,
+      supabaseAnonKey: anonKey,
+    };
   }
 
   private loadFromDisk() {
@@ -234,13 +295,20 @@ class DatabaseService {
         const raw = fs.readFileSync(this.storageFile, 'utf-8');
         const parsed = JSON.parse(raw);
         if (parsed.products && parsed.products.length > 0) {
+          // Ensure all seed products exist in local store
+          const existingIds = new Set(parsed.products.map((p: Product) => p.id));
+          for (const seed of SEED_PRODUCTS) {
+            if (!existingIds.has(seed.id)) {
+              parsed.products.push(seed);
+            }
+          }
           this.memoryStore = parsed;
         }
       } else {
         this.saveToDisk();
       }
-    } catch (err) {
-      console.error('[DB] Failed to load local store:', err);
+    } catch {
+      // Fallback to in-memory seed
     }
   }
 
@@ -251,57 +319,78 @@ class DatabaseService {
         fs.mkdirSync(dataDir, { recursive: true });
       }
       fs.writeFileSync(this.storageFile, JSON.stringify(this.memoryStore, null, 2), 'utf-8');
-    } catch (err) {
-      console.error('[DB] Failed to save local store:', err);
+    } catch {
+      // Ignore write issues in read-only environments
     }
   }
 
   public async initSupabase() {
-    const rawUrl = process.env.SUPABASE_URL;
-    const url = this.sanitizeSupabaseUrl(rawUrl);
-    const key = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
+    const url = this.sanitizeSupabaseUrl(process.env.SUPABASE_URL);
+    const serviceKey = this.sanitizeSecret(process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const anonKey = this.sanitizeSecret(process.env.SUPABASE_ANON_KEY);
+    const key = serviceKey || anonKey;
 
-    if (url && key) {
-      try {
-        this.supabase = createClient(url, key, {
-          auth: { persistSession: false },
-        });
-
-        // Test query against products table
-        const { error } = await this.supabase.from('products').select('id').limit(1);
-        if (!error) {
-          this.isSupabaseConnected = true;
-          this.supabaseStatusMessage = 'Connected to remote Supabase PostgreSQL';
-          console.log('[DB] Connected successfully to Supabase PostgreSQL database.');
-
-          // Sync any seed products if remote table is empty
-          try {
-            const { count } = await this.supabase.from('products').select('*', { count: 'exact', head: true });
-            if (count === 0) {
-              await this.supabase.from('products').insert(this.memoryStore.products);
-              console.log('[DB] Seeded initial products to remote Supabase table.');
-            }
-          } catch (syncErr) {
-            console.warn('[DB] Supabase product sync note:', syncErr);
-          }
-        } else {
-          this.isSupabaseConnected = false;
-          if (error.code === 'PGRST205' || error.message?.includes('schema cache') || error.message?.includes('does not exist')) {
-            this.supabaseStatusMessage = 'Supabase credentials verified. Remote tables not yet generated (run supabase_schema.sql). Operating on persistent local storage.';
-            console.log(`[DB] Supabase project connected (${url}). Schema tables not yet created — operating seamlessly on persistent local storage.`);
-          } else {
-            this.supabaseStatusMessage = `Supabase notice: ${error.message}`;
-            console.log('[DB] Supabase check notice:', error.message);
-          }
-        }
-      } catch (err: any) {
-        this.isSupabaseConnected = false;
-        this.supabaseStatusMessage = err?.message || 'Connection error';
-        console.warn('[DB] Supabase connection notice:', err?.message);
-      }
-    } else {
+    if (!url || !key || key.startsWith('MY_')) {
       this.isSupabaseConnected = false;
-      this.supabaseStatusMessage = 'Operating on local storage';
+      this.supabaseStatusMessage = 'Operating on persistent local storage';
+      return;
+    }
+
+    try {
+      this.supabase = createClient(url, key, {
+        auth: { persistSession: false },
+      });
+
+      // Test query against products table
+      const { error } = await this.supabase.from('products').select('id').limit(1);
+      if (!error) {
+        this.isSupabaseConnected = true;
+        this.supabaseStatusMessage = 'Connected to remote Supabase PostgreSQL';
+        console.log('[DB] Connected to Supabase PostgreSQL database.');
+
+        // Ensure all seed products (including peach-hibiscus-tea) are present in remote products table
+        try {
+          await this.supabase
+            .from('products')
+            .upsert(
+              this.memoryStore.products.map((p) => ({
+                id: p.id,
+                name: p.name,
+                description: p.description,
+                price: p.price,
+                image: p.image,
+                category: p.category,
+                is_available: p.is_available,
+              })),
+              { onConflict: 'id', ignoreDuplicates: true }
+            );
+        } catch {
+          // Ignore seed sync notice if RLS restricts anonymous upsert
+        }
+      } else {
+        this.isSupabaseConnected = false;
+        const msg = String(error.message || '');
+        if (
+          error.code === 'PGRST205' ||
+          msg.includes('schema cache') ||
+          msg.includes('does not exist')
+        ) {
+          this.supabaseStatusMessage =
+            'Supabase project reachable. Tables not yet created — operating on persistent local storage.';
+          console.log('[DB] Supabase reachable; using persistent local storage until tables are initialized.');
+        } else if (msg.toLowerCase().includes('fetch') || msg.toLowerCase().includes('network')) {
+          this.supabaseStatusMessage =
+            'Supabase remote endpoint unreachable — operating seamlessly on persistent local storage.';
+          console.log('[DB] Operating seamlessly on persistent local storage (data/kopi_store.json).');
+        } else {
+          this.supabaseStatusMessage = 'Operating seamlessly on persistent local storage.';
+          console.log('[DB] Operating seamlessly on persistent local storage.');
+        }
+      }
+    } catch {
+      this.isSupabaseConnected = false;
+      this.supabaseStatusMessage = 'Operating seamlessly on persistent local storage.';
+      console.log('[DB] Operating seamlessly on persistent local storage.');
     }
   }
 
@@ -309,7 +398,7 @@ class DatabaseService {
     const cleanUrl = this.sanitizeSupabaseUrl(process.env.SUPABASE_URL);
     return {
       connected: this.isSupabaseConnected,
-      url: cleanUrl || 'Local in-memory / JSON store',
+      url: cleanUrl || 'Local persistent JSON store',
       tablesReady: this.isSupabaseConnected,
       message: this.supabaseStatusMessage,
       ordersCount: this.memoryStore.orders.length,
@@ -317,18 +406,83 @@ class DatabaseService {
     };
   }
 
+  private normalizeProduct(raw: any): Product {
+    let category: 'Coffee' | 'Non-Coffee' | 'Pastries' = 'Coffee';
+    const rawCat = String(raw.category || raw.category_id || 'Coffee').toLowerCase();
+    if (rawCat.includes('non') || rawCat.includes('tea') || rawCat.includes('matcha')) {
+      category = 'Non-Coffee';
+    } else if (rawCat.includes('pastr') || rawCat.includes('croissant') || rawCat.includes('bakery')) {
+      category = 'Pastries';
+    } else {
+      category = 'Coffee';
+    }
+
+    return {
+      id: String(raw.id),
+      name: String(raw.name || ''),
+      description: String(raw.description || ''),
+      price: Number(raw.price || 0),
+      image:
+        raw.image ||
+        'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=800&q=80',
+      category,
+      is_available: raw.is_available !== undefined ? Boolean(raw.is_available) : true,
+      created_at: raw.created_at || new Date().toISOString(),
+      updated_at: raw.updated_at || new Date().toISOString(),
+    };
+  }
+
+  private normalizeOrder(raw: any): Order {
+    const rawItems = Array.isArray(raw.items) ? raw.items : [];
+    const items: OrderItem[] = rawItems.map((it: any) => {
+      const unitPrice = Number(it.price ?? it.product_price ?? 0);
+      const qty = Math.max(1, Number(it.quantity || 1));
+      return {
+        id: it.id,
+        order_id: it.order_id,
+        product_id: String(it.product_id || ''),
+        product_name: String(it.product_name || 'Specialty Drink'),
+        price: unitPrice,
+        product_price: unitPrice,
+        quantity: qty,
+        subtotal: Number(it.subtotal ?? unitPrice * qty),
+        created_at: it.created_at,
+      };
+    });
+
+    return {
+      id: raw.id,
+      user_id: raw.user_id || raw.customer_id || null,
+      customer_name: String(raw.customer_name || 'Valued Customer'),
+      customer_email: raw.customer_email || '',
+      status: (raw.status as OrderStatus) || 'PENDING',
+      total_amount: Number(raw.total_amount || 0),
+      notes: raw.notes || '',
+      items,
+      created_at: raw.created_at || new Date().toISOString(),
+      updated_at: raw.updated_at || new Date().toISOString(),
+    };
+  }
+
   // --- PRODUCTS ---
   public async getProducts(category?: string): Promise<Product[]> {
     if (this.isSupabaseConnected && this.supabase) {
       try {
-        let q = this.supabase.from('products').select('*').order('created_at', { ascending: false });
-        if (category && category !== 'all') {
-          q = q.eq('category', category);
+        const { data, error } = await this.supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          let normalized = data.map((p) => this.normalizeProduct(p));
+          if (category && category !== 'all') {
+            normalized = normalized.filter(
+              (p) => p.category.toLowerCase() === category.toLowerCase()
+            );
+          }
+          return normalized;
         }
-        const { data, error } = await q;
-        if (!error && data) return data as Product[];
-      } catch (e) {
-        console.warn('[DB] Supabase fetch products fallback to local store');
+      } catch {
+        // Fallback to local store
       }
     }
 
@@ -342,20 +496,24 @@ class DatabaseService {
   public async getProductById(id: string): Promise<Product | null> {
     if (this.isSupabaseConnected && this.supabase) {
       try {
-        const { data, error } = await this.supabase.from('products').select('*').eq('id', id).single();
-        if (!error && data) return data as Product;
-      } catch (e) {
+        const { data, error } = await this.supabase
+          .from('products')
+          .select('*')
+          .eq('id', id)
+          .single();
+        if (!error && data) return this.normalizeProduct(data);
+      } catch {
         // Fallback
       }
     }
     return this.memoryStore.products.find((p) => p.id === id) || null;
   }
 
-  public async createProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> {
-    const id = (product.name || 'product')
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-') + '-' + Math.floor(Math.random() * 1000);
+  public async createProduct(
+    product: Omit<Product, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Product> {
+    const id =
+      slugify(product.name || 'product') + '-' + Math.floor(100 + Math.random() * 900);
 
     const now = new Date().toISOString();
     const newProduct: Product = {
@@ -363,7 +521,9 @@ class DatabaseService {
       name: product.name,
       description: product.description || '',
       price: Number(product.price),
-      image: product.image || 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=800&q=80',
+      image:
+        product.image ||
+        'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=800&q=80',
       category: product.category,
       is_available: product.is_available ?? true,
       created_at: now,
@@ -372,14 +532,31 @@ class DatabaseService {
 
     if (this.isSupabaseConnected && this.supabase) {
       try {
-        const { data, error } = await this.supabase.from('products').insert([newProduct]).select().single();
+        const { data, error } = await this.supabase
+          .from('products')
+          .insert([
+            {
+              id: newProduct.id,
+              name: newProduct.name,
+              description: newProduct.description,
+              price: newProduct.price,
+              image: newProduct.image,
+              category: newProduct.category,
+              is_available: newProduct.is_available,
+              created_at: now,
+              updated_at: now,
+            },
+          ])
+          .select()
+          .single();
         if (!error && data) {
-          this.memoryStore.products.unshift(data as Product);
+          const normalized = this.normalizeProduct(data);
+          this.memoryStore.products.unshift(normalized);
           this.saveToDisk();
-          return data as Product;
+          return normalized;
         }
-      } catch (e) {
-        console.warn('[DB] Supabase insert product fallback to local store');
+      } catch {
+        // Fallback to local store
       }
     }
 
@@ -393,21 +570,30 @@ class DatabaseService {
 
     if (this.isSupabaseConnected && this.supabase) {
       try {
+        const payload: Record<string, any> = { updated_at: now };
+        if (updates.name !== undefined) payload.name = updates.name;
+        if (updates.description !== undefined) payload.description = updates.description;
+        if (updates.price !== undefined) payload.price = updates.price;
+        if (updates.image !== undefined) payload.image = updates.image;
+        if (updates.category !== undefined) payload.category = updates.category;
+        if (updates.is_available !== undefined) payload.is_available = updates.is_available;
+
         const { data, error } = await this.supabase
           .from('products')
-          .update({ ...updates, updated_at: now })
+          .update(payload)
           .eq('id', id)
           .select()
           .single();
         if (!error && data) {
+          const normalized = this.normalizeProduct(data);
           const idx = this.memoryStore.products.findIndex((p) => p.id === id);
           if (idx !== -1) {
-            this.memoryStore.products[idx] = data as Product;
+            this.memoryStore.products[idx] = normalized;
             this.saveToDisk();
           }
-          return data as Product;
+          return normalized;
         }
-      } catch (e) {
+      } catch {
         // Fallback
       }
     }
@@ -428,7 +614,7 @@ class DatabaseService {
     if (this.isSupabaseConnected && this.supabase) {
       try {
         await this.supabase.from('products').delete().eq('id', id);
-      } catch (e) {
+      } catch {
         // Fallback
       }
     }
@@ -452,9 +638,9 @@ class DatabaseService {
         }
         const { data, error } = await q;
         if (!error && data) {
-          return data as Order[];
+          return data.map((o) => this.normalizeOrder(o));
         }
-      } catch (e) {
+      } catch {
         // Fallback
       }
     }
@@ -463,7 +649,9 @@ class DatabaseService {
     if (userId) {
       list = list.filter((o) => o.user_id === userId);
     }
-    return [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return [...list]
+      .map((o) => this.normalizeOrder(o))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 
   public async getOrderById(id: string | number): Promise<Order | null> {
@@ -474,14 +662,53 @@ class DatabaseService {
           .select(`*, items:order_items(*)`)
           .eq('id', id)
           .single();
-        if (!error && data) return data as Order;
-      } catch (e) {
+        if (!error && data) return this.normalizeOrder(data);
+      } catch {
         // Fallback
       }
     }
 
     const order = this.memoryStore.orders.find((o) => String(o.id) === String(id));
-    return order || null;
+    return order ? this.normalizeOrder(order) : null;
+  }
+
+  private findMatchingProduct(
+    products: Product[],
+    rawProductId: string,
+    rawProductName?: string
+  ): Product | undefined {
+    const cleanId = String(rawProductId || '').trim();
+    const slugId = slugify(cleanId);
+
+    // 1. Exact ID or slug match
+    let found = products.find(
+      (p) => p.id === cleanId || p.id === slugId || slugify(p.name) === slugId
+    );
+    if (found) return found;
+
+    // 2. Match by product name (ignoring customization suffix in parentheses)
+    if (rawProductName) {
+      const baseTitle = rawProductName.split('(')[0].trim();
+      const titleSlug = slugify(baseTitle);
+      found = products.find(
+        (p) =>
+          p.id === titleSlug ||
+          slugify(p.name) === titleSlug ||
+          p.name.toLowerCase().includes(baseTitle.toLowerCase()) ||
+          baseTitle.toLowerCase().includes(p.name.toLowerCase())
+      );
+      if (found) return found;
+    }
+
+    // 3. Partial slug match (e.g. 'butter-croissant' vs 'artisan-butter-croissant')
+    if (slugId && slugId !== '1') {
+      found = products.find(
+        (p) => p.id.includes(slugId) || slugify(p.name).includes(slugId)
+      );
+      if (found) return found;
+    }
+
+    return undefined;
   }
 
   public async createOrder(orderInput: {
@@ -489,32 +716,44 @@ class DatabaseService {
     customer_name: string;
     customer_email?: string | null;
     notes?: string;
-    items: Array<{ product_id: string; quantity: number }>;
+    items: Array<{
+      product_id: string;
+      product_name?: string;
+      price?: number;
+      quantity: number;
+    }>;
   }): Promise<Order> {
     const products = await this.getProducts();
-    const productMap = new Map<string, Product>();
-    products.forEach((p) => productMap.set(p.id, p));
 
     const validatedItems: OrderItem[] = [];
     let totalAmount = 0;
 
     for (const item of orderInput.items) {
-      const prod = productMap.get(item.product_id);
+      const prod = this.findMatchingProduct(products, item.product_id, item.product_name);
       if (!prod) {
-        throw new Error(`Product not found with id: ${item.product_id}`);
+        throw new Error(`Product not found: ${item.product_name || item.product_id}`);
       }
       if (!prod.is_available) {
         throw new Error(`Product "${prod.name}" is currently unavailable.`);
       }
 
-      const qty = Math.max(1, Math.floor(item.quantity || 1));
-      const unitPrice = Number(prod.price);
+      const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
+      const basePrice = Number(prod.price);
+      // Allow customized unit price (size/milk/add-ons) if >= basePrice, capped reasonably
+      const requestedPrice = Number(item.price || 0);
+      const unitPrice =
+        requestedPrice >= basePrice && requestedPrice <= basePrice + 300
+          ? requestedPrice
+          : basePrice;
       const subtotal = unitPrice * qty;
       totalAmount += subtotal;
 
+      const displayProductName =
+        item.product_name && item.product_name.trim() ? item.product_name.trim() : prod.name;
+
       validatedItems.push({
         product_id: prod.id,
-        product_name: prod.name,
+        product_name: displayProductName,
         quantity: qty,
         product_price: unitPrice,
         price: unitPrice,
@@ -523,13 +762,13 @@ class DatabaseService {
     }
 
     const now = new Date().toISOString();
-    const orderId = this.memoryStore.nextOrderId++;
+    let orderId: number | string = this.memoryStore.nextOrderId++;
 
     const newOrder: Order = {
       id: orderId,
       user_id: orderInput.user_id || null,
       customer_name: orderInput.customer_name,
-      customer_email: orderInput.customer_email || null,
+      customer_email: orderInput.customer_email || '',
       status: 'PENDING',
       total_amount: totalAmount,
       notes: orderInput.notes || '',
@@ -540,15 +779,28 @@ class DatabaseService {
 
     if (this.isSupabaseConnected && this.supabase) {
       try {
+        // Ensure foreign key safety for user_id REFERENCES users(id)
+        let safeUserId: string | null = null;
+        if (newOrder.user_id) {
+          const { data: existingUser } = await this.supabase
+            .from('users')
+            .select('id')
+            .eq('id', newOrder.user_id)
+            .maybeSingle();
+          if (existingUser) {
+            safeUserId = newOrder.user_id;
+          }
+        }
+
+        // Insert into orders table matching the user's exact 4-table Supabase schema:
+        // (user_id, customer_name, customer_email, status, total_amount, notes, created_at, updated_at)
         const { data: orderData, error: orderErr } = await this.supabase
           .from('orders')
           .insert([
             {
-              id: orderId,
-              customer_id: newOrder.user_id && /^[0-9a-fA-F-]{36}$/.test(newOrder.user_id) ? newOrder.user_id : null,
-              user_id: newOrder.user_id,
+              user_id: safeUserId,
               customer_name: newOrder.customer_name,
-              customer_email: newOrder.customer_email,
+              customer_email: newOrder.customer_email || '', // Empty string satisfies NOT NULL when email is omitted
               status: newOrder.status,
               total_amount: newOrder.total_amount,
               notes: newOrder.notes,
@@ -560,19 +812,24 @@ class DatabaseService {
           .single();
 
         if (!orderErr && orderData) {
+          orderId = orderData.id;
+          newOrder.id = orderData.id;
+
+          // Insert into order_items table matching the user's exact schema:
+          // (order_id, product_id, product_name, quantity, price, subtotal, created_at)
           const itemsToInsert = validatedItems.map((it) => ({
             order_id: orderData.id,
             product_id: it.product_id,
             product_name: it.product_name,
-            product_price: it.product_price,
             quantity: it.quantity,
+            price: it.price,
             subtotal: it.subtotal,
             created_at: now,
           }));
           await this.supabase.from('order_items').insert(itemsToInsert);
         }
-      } catch (e: any) {
-        console.warn('[DB] Supabase createOrder error, local store handled:', e?.message);
+      } catch {
+        // Fallback to local store seamlessly
       }
     }
 
@@ -598,11 +855,25 @@ class DatabaseService {
 
     if (this.isSupabaseConnected && this.supabase) {
       try {
-        await this.supabase
+        const { data, error } = await this.supabase
           .from('orders')
           .update({ status, updated_at: now })
-          .eq('id', id);
-      } catch (e) {
+          .eq('id', id)
+          .select(`*, items:order_items(*)`)
+          .single();
+
+        if (!error && data) {
+          const updatedOrder = this.normalizeOrder(data);
+          const localIdx = this.memoryStore.orders.findIndex((o) => String(o.id) === String(id));
+          if (localIdx !== -1) {
+            this.memoryStore.orders[localIdx] = updatedOrder;
+          } else {
+            this.memoryStore.orders.unshift(updatedOrder);
+          }
+          this.saveToDisk();
+          return updatedOrder;
+        }
+      } catch {
         // Fallback
       }
     }
@@ -630,11 +901,10 @@ class DatabaseService {
     );
 
     if (user) {
-      user.id = userData.id; // Enforce stable Supabase Auth UUID
+      user.id = userData.id;
       if (userData.name) user.name = userData.name;
       if (userData.profile_image) user.profile_image = userData.profile_image;
       user.updated_at = now;
-      // Note: Preserve existing ADMIN role if already established, but do NOT promote based on email pattern
     } else {
       user = {
         id: userData.id,
@@ -643,7 +913,7 @@ class DatabaseService {
         profile_image:
           userData.profile_image ||
           `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(userData.name || userData.email)}`,
-        role: 'CUSTOMER', // Default all synced external users to CUSTOMER
+        role: 'CUSTOMER',
         created_at: now,
         updated_at: now,
       };
@@ -652,17 +922,21 @@ class DatabaseService {
 
     if (this.isSupabaseConnected && this.supabase) {
       try {
-        await this.supabase.from('profiles').upsert([
-          {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            profile_image: user.profile_image,
-            role: user.role,
-            updated_at: now,
-          },
-        ], { onConflict: 'id' });
-      } catch (e) {
+        // Sync with the `users` table in the user's Supabase schema
+        await this.supabase.from('users').upsert(
+          [
+            {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              profile_image: user.profile_image,
+              role: user.role,
+              updated_at: now,
+            },
+          ],
+          { onConflict: 'id' }
+        );
+      } catch {
         // Fallback handled seamlessly
       }
     }
@@ -674,7 +948,7 @@ class DatabaseService {
   public async verifySupabaseToken(token: string): Promise<User | null> {
     if (!token) return null;
 
-    if (this.supabase) {
+    if (this.isSupabaseConnected && this.supabase) {
       try {
         const { data, error } = await this.supabase.auth.getUser(token);
         if (!error && data?.user) {
@@ -693,17 +967,15 @@ class DatabaseService {
             profile_image: avatar,
           });
         }
-      } catch (err: any) {
-        console.warn('[DB] Supabase token verification failed:', err?.message);
+      } catch {
+        // Ignore token verification error and check local store
       }
     }
 
-    // Fallback: check if token represents a user ID already in memory
     const existing = this.memoryStore.users.find((u) => u.id === token);
     return existing || null;
   }
 
-  // Backwards-compatible adapter for legacy callers
   public async upsertGoogleUser(userData: {
     google_id?: string;
     name: string;
@@ -726,7 +998,7 @@ class DatabaseService {
 
   // --- STATS ---
   public async getStats() {
-    const orders = this.memoryStore.orders;
+    const orders = await this.getOrders();
     const pending = orders.filter((o) => o.status === 'PENDING').length;
     const preparing = orders.filter((o) => o.status === 'PREPARING').length;
     const ready = orders.filter((o) => o.status === 'READY').length;

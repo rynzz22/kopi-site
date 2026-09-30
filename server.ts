@@ -427,6 +427,8 @@ app.post('/api/orders', async (req: Request, res: Response) => {
       user_id: user_id ? String(user_id).trim() : null,
       items: items.map((it) => ({
         product_id: String(it.product_id).trim(),
+        product_name: it.product_name ? String(it.product_name).trim() : undefined,
+        price: it.price !== undefined ? Number(it.price) : undefined,
         quantity: Math.floor(Number(it.quantity)),
       })),
     });
@@ -490,15 +492,15 @@ app.put('/api/orders/:id/status', requireAdminAuth, async (req: Request, res: Re
 
 // GET /api/auth/config - Public Supabase configuration for client-side Auth
 app.get('/api/auth/config', (req: Request, res: Response) => {
-  const rawUrl = process.env.SUPABASE_URL || '';
-  const cleanUrl = rawUrl.replace(/\/rest\/v1\/?$/i, '').replace(/\/rest\/?$/i, '').replace(/\/+$/, '');
-  const anonKey = (process.env.SUPABASE_ANON_KEY || '').trim();
+  const status = db.getSupabaseStatus();
+  const config = db.getPublicSupabaseConfig();
 
   res.json({
     success: true,
     data: {
-      supabaseUrl: cleanUrl,
-      supabaseAnonKey: anonKey,
+      supabaseUrl: status.connected ? config.supabaseUrl : '',
+      supabaseAnonKey: status.connected ? config.supabaseAnonKey : '',
+      connected: status.connected,
     },
   });
 });
