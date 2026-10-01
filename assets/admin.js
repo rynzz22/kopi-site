@@ -180,6 +180,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       allProducts = allProducts.filter((p) => p.id !== id);
       renderProducts();
     });
+
+    // Polling fallback for XAMPP/PHP environments without WebSocket daemon
+    client.on('poll:tick', async () => {
+      try {
+        const res = await client.getOrders();
+        if (res && res.success && Array.isArray(res.data)) {
+          const existingIds = new Set(allOrders.map((o) => String(o.id)));
+          const newOrders = res.data.filter((o) => !existingIds.has(String(o.id)));
+          allOrders = res.data;
+          if (newOrders.length > 0 && existingIds.size > 0) {
+            const latest = newOrders[0];
+            if (soundEnabled && client.playChime) client.playChime('order');
+            if (toastMsgEl && liveToast) {
+              toastMsgEl.textContent = `New Order #${latest.id} from ${latest.customer_name || 'Customer'} (₱${Number(latest.total_amount || 0).toFixed(2)})`;
+              liveToast.show();
+            }
+          }
+          updateSummaryStats();
+          renderOrders();
+        }
+      } catch {
+        // Ignore transient poll error
+      }
+    });
   }
 
   // --- STATS CALCULATION (DERIVED STRICTLY FROM REAL DATABASE ORDERS) ---

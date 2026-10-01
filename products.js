@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initCheckoutAndCartSystem();
     initHeartFavorites();
     initGoogleAuthIntegration();
+    initLiveMenuSync();
 });
 
 /* ==========================================================================
@@ -1235,4 +1236,66 @@ function escapeHtml(str) {
     if (!str) return "";
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+
+/* ==========================================================================
+   10. LIVE DATABASE MENU SYNC (Products CRUD & Availability)
+   ========================================================================== */
+async function initLiveMenuSync() {
+    const client = window.kopiClient;
+    if (!client) return;
+
+    async function syncProductsFromApi() {
+        try {
+            const res = await client.getProducts();
+            if (!res || !res.success || !Array.isArray(res.data)) return;
+
+            const grid = document.querySelector(".products-grid");
+            if (!grid) return;
+
+            res.data.forEach(prod => {
+                let card = grid.querySelector(`.cart-card[data-product-id="${prod.id}"]`);
+                if (card) {
+                    // Sync price, title, description, image, and availability on existing card
+                    card.setAttribute("data-base-price", String(prod.price));
+                    const priceTag = card.querySelector(".price-tag");
+                    if (priceTag) {
+                        priceTag.setAttribute("data-base", String(prod.price));
+                        const activeSize = card.querySelector(".size-chips .chip.active");
+                        const extra = activeSize ? parseInt(activeSize.getAttribute("data-extra") || "0", 10) : 0;
+                        priceTag.textContent = `₱${Number(prod.price) + extra}`;
+                    }
+                    const addBtn = card.querySelector(".cart.add-btn");
+                    const buyBtn = card.querySelector(".buy-now-btn");
+                    if (!prod.is_available) {
+                        card.style.opacity = "0.6";
+                        if (addBtn) {
+                            addBtn.disabled = true;
+                            addBtn.innerHTML = `<i class="fa-solid fa-ban"></i> Sold Out`;
+                        }
+                        if (buyBtn) buyBtn.disabled = true;
+                    } else {
+                        card.style.opacity = "1";
+                        if (addBtn) {
+                            addBtn.disabled = false;
+                            addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Add`;
+                        }
+                        if (buyBtn) buyBtn.disabled = false;
+                    }
+                }
+            });
+        } catch {
+            // Static menu cards remain active if offline
+        }
+    }
+
+    await syncProductsFromApi();
+
+    client.on("product:created", () => syncProductsFromApi());
+    client.on("product:updated", () => syncProductsFromApi());
+    client.on("product:deleted", ({ id }) => {
+        const card = document.querySelector(`.cart-card[data-product-id="${id}"]`);
+        if (card) card.remove();
+    });
+}
+
 

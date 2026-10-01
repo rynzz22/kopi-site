@@ -113,7 +113,7 @@ adminSessions.set(defaultAdminToken, {
 });
 
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin1234';
 
 async function getAdminFromRequest(req: Request): Promise<{ username: string; role: 'ADMIN' } | null> {
   const authHeader = req.headers.authorization;

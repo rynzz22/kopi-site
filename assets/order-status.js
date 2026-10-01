@@ -56,6 +56,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Subscribe to HTTP polling fallback (for XAMPP/PHP environments without WebSockets)
+  let lastKnownStatus = null;
+  client.on('poll:tick', async () => {
+    if (!currentOrderId) return;
+    try {
+      const res = await client.getOrder(currentOrderId);
+      if (res && res.success && res.data) {
+        const order = res.data;
+        if (lastKnownStatus && order.status !== lastKnownStatus) {
+          applyOrderStatus(order.status, order);
+          if (order.status === 'READY') {
+            client.playChime('ready');
+            celebrateReady();
+          } else {
+            client.playChime('ping');
+          }
+        }
+        lastKnownStatus = order.status;
+      }
+    } catch {
+      // Ignore poll error
+    }
+  });
+
   // Search handler
   orderLookupForm.addEventListener('submit', (e) => {
     e.preventDefault();

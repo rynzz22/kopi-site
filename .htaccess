@@ -1,7 +1,0 @@
-Options -Indexes
-
-# Route all /api/* requests through api/index.php
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/(.*)$ api/index.php [QSA,L]

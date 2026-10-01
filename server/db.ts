@@ -1,6 +1,13 @@
+import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
+const DEFAULT_SUPABASE_URL = 'https://yyykmhmewczslydoyawq.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5eWttaG1ld2N6c2x5ZG95YXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3OTg1NjYsImV4cCI6MjEwNjM3NDU2Nn0.qmAV-9fU1Uubv96zSfINmLSl8X6-4ZdlvvV_5eafLgE';
+const DEFAULT_SUPABASE_SERVICE_ROLE_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5eWttaG1ld2N6c2x5ZG95YXdxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDc5ODU2NiwiZXhwIjoyMTA2Mzc0NTY2fQ.dnsNNOW4dlAUO5bgSD5nPEJP7Qi-ioj3TRhQNCDuJJc';
 
 export interface User {
   id: string; // Stable Supabase Auth user UUID
@@ -273,9 +280,9 @@ class DatabaseService {
   }
 
   public getPublicSupabaseConfig() {
-    const url = this.sanitizeSupabaseUrl(process.env.SUPABASE_URL);
-    const anonKey = this.sanitizeSecret(process.env.SUPABASE_ANON_KEY);
-    // Only expose client config if backend verified connectivity or valid URL+key exist
+    const url = this.sanitizeSupabaseUrl(process.env.SUPABASE_URL) || DEFAULT_SUPABASE_URL;
+    const anonKey =
+      this.sanitizeSecret(process.env.SUPABASE_ANON_KEY) || DEFAULT_SUPABASE_ANON_KEY;
     if (!url || !anonKey || anonKey.startsWith('MY_')) {
       return { supabaseUrl: '', supabaseAnonKey: '' };
     }
@@ -325,9 +332,12 @@ class DatabaseService {
   }
 
   public async initSupabase() {
-    const url = this.sanitizeSupabaseUrl(process.env.SUPABASE_URL);
-    const serviceKey = this.sanitizeSecret(process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const anonKey = this.sanitizeSecret(process.env.SUPABASE_ANON_KEY);
+    const url = this.sanitizeSupabaseUrl(process.env.SUPABASE_URL) || DEFAULT_SUPABASE_URL;
+    const serviceKey =
+      this.sanitizeSecret(process.env.SUPABASE_SERVICE_ROLE_KEY) ||
+      DEFAULT_SUPABASE_SERVICE_ROLE_KEY;
+    const anonKey =
+      this.sanitizeSecret(process.env.SUPABASE_ANON_KEY) || DEFAULT_SUPABASE_ANON_KEY;
     const key = serviceKey || anonKey;
 
     if (!url || !key || key.startsWith('MY_')) {
