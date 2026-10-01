@@ -3,275 +3,701 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KKEOPI Coffee — Real-Time Order Tracker</title>
+  <title>KKEOPI — Live Order Tracker</title>
 
-  <!-- Google Fonts & FontAwesome -->
+  <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
 
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css">
 
   <style>
     :root {
-      --kopi-primary: #BB8C64;
-      --kopi-espresso: #301A0D;
-      --kopi-cream: #FDFBF7;
+      --bg-canvas: #120D0A;
+      --bg-surface: #1A130E;
+      --bg-elevated: #221913;
+      --border-subtle: rgba(239, 231, 221, 0.09);
+      --border-focus: rgba(187, 140, 100, 0.45);
+      --text-primary: #F5EFE6;
+      --text-secondary: #A6998A;
+      --text-muted: #6E6257;
+      --accent-kopi: #C6976E;
+      --status-ready: #10B981;
+      --status-prep: #F59E0B;
+      --status-cancel: #EF4444;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
-      background-color: #170E08;
-      color: #EFE7DD;
-      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 0.875rem;
+      line-height: 1.5;
       min-height: 100vh;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
     }
 
     .brand-font {
       font-family: 'Cormorant Garamond', Georgia, serif;
+      letter-spacing: 0.02em;
     }
 
-    .tracker-card {
-      background: #23150D;
-      border: 1px solid rgba(187, 140, 100, 0.25);
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    .mono-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
     }
 
-    /* Stepper Styling */
-    .step-timeline {
+    /* Minimal Top Bar Contract (3 zones) */
+    .tracker-topbar {
+      height: 54px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(18, 13, 10, 0.88);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .tracker-topbar-inner {
+      max-width: 1040px;
+      margin: 0 auto;
+      height: 100%;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-wordmark {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+
+    .top-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .top-nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: color 150ms ease;
+      white-space: nowrap;
+    }
+
+    .top-nav-links a:hover,
+    .top-nav-links a.active {
+      color: var(--text-primary);
+    }
+
+    .top-nav-links a.active {
+      text-decoration: underline;
+      text-underline-offset: 6px;
+      text-decoration-color: var(--accent-kopi);
+    }
+
+    .top-action-link {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: transform 150ms ease, border-color 150ms ease;
+      white-space: nowrap;
+    }
+
+    .top-action-link:hover {
+      color: var(--text-primary);
+      border-color: var(--border-focus);
+      transform: translateY(-1px);
+    }
+
+    /* Main Compact Container */
+    .tracker-shell {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+    }
+
+    /* Header Strip */
+    .tracker-header-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .tracker-title {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.65rem;
+      font-weight: 600;
+      margin: 0 0 2px;
+      color: var(--text-primary);
+      line-height: 1.15;
+    }
+
+    .tracker-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Compact Search Form */
+    .lookup-form {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lookup-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .lookup-input-wrap i {
+      position: absolute;
+      left: 10px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .lookup-input {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      padding: 6px 10px 6px 26px;
+      border-radius: 6px;
+      width: 155px;
+      transition: border-color 150ms ease;
+    }
+
+    .lookup-input:focus {
+      outline: none;
+      border-color: var(--accent-kopi);
+    }
+
+    .lookup-input::placeholder {
+      color: var(--text-muted);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .btn-minimal {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 11px;
+      font-size: 0.76rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    .btn-minimal:hover {
+      border-color: var(--border-focus);
+      transform: translateY(-1px);
+    }
+
+    .btn-minimal.primary {
+      background: var(--accent-kopi);
+      color: #120D0A;
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    .btn-minimal.primary:hover {
+      background: #d3a67e;
+    }
+
+    /* 2-Column Minimalist Layout */
+    .tracker-grid {
+      display: grid;
+      grid-template-columns: 1.35fr 0.95fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 820px) {
+      .tracker-grid {
+        grid-template-columns: 1fr;
+      }
+      .top-nav-links {
+        display: none;
+      }
+    }
+
+    .surface-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    /* Order Meta Header */
+    .order-meta-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .order-id-line {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .order-id-number {
+      color: var(--accent-kopi);
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .customer-heading {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .status-indicator-group {
+      text-align: right;
+    }
+
+    .status-text-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent-kopi);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      display: inline-block;
+    }
+
+    .elapsed-timer {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Minimalist Compact Stepper */
+    .compact-stepper {
+      position: relative;
       display: flex;
       justify-content: space-between;
-      position: relative;
-      margin: 40px 0 30px;
+      margin: 22px 0 18px;
+      padding: 0 4px;
     }
 
-    .step-timeline::before {
-      content: '';
+    .compact-stepper-track {
       position: absolute;
-      top: 24px;
-      left: 30px;
-      right: 30px;
-      height: 4px;
-      background: rgba(187, 140, 100, 0.2);
+      top: 13px;
+      left: 24px;
+      right: 24px;
+      height: 2px;
+      background: rgba(239, 231, 221, 0.08);
       z-index: 1;
     }
 
-    .step-timeline-progress {
+    .compact-stepper-fill {
       position: absolute;
-      top: 24px;
-      left: 30px;
-      height: 4px;
-      background: linear-gradient(90deg, #BB8C64, #10B981);
+      top: 13px;
+      left: 24px;
+      height: 2px;
+      background: var(--accent-kopi);
       z-index: 2;
-      transition: width 0.6s ease;
       width: 0%;
+      transition: width 400ms cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .step-item {
+    .step-node {
       position: relative;
       z-index: 3;
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       flex: 1;
     }
 
     .step-circle {
-      width: 50px;
-      height: 50px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: #2D1B10;
-      border: 2px solid rgba(187, 140, 100, 0.3);
-      color: #8C5C38;
+      background: var(--bg-canvas);
+      border: 1.5px solid rgba(239, 231, 221, 0.16);
+      color: var(--text-muted);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 10px;
-      font-size: 1.15rem;
-      transition: all 0.3s ease;
+      font-size: 0.7rem;
+      margin-bottom: 7px;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
     }
 
-    .step-item.active .step-circle {
-      background: #BB8C64;
-      border-color: #BB8C64;
-      color: #170E08;
-      box-shadow: 0 0 15px rgba(187, 140, 100, 0.6);
-      transform: scale(1.1);
+    .step-node.completed .step-circle {
+      background: var(--bg-elevated);
+      border-color: var(--accent-kopi);
+      color: var(--accent-kopi);
     }
 
-    .step-item.completed .step-circle {
-      background: #10B981;
-      border-color: #10B981;
-      color: #FFFFFF;
+    .step-node.active .step-circle {
+      background: var(--accent-kopi);
+      border-color: var(--accent-kopi);
+      color: #120D0A;
+      transform: scale(1.08);
     }
 
     .step-label {
-      font-size: 0.85rem;
-      color: #9C8B7E;
+      font-size: 0.7rem;
+      color: var(--text-muted);
       font-weight: 500;
+      white-space: nowrap;
     }
 
-    .step-item.active .step-label {
-      color: #FDFBF7;
+    .step-node.completed .step-label {
+      color: var(--text-secondary);
+    }
+
+    .step-node.active .step-label {
+      color: var(--text-primary);
       font-weight: 600;
     }
 
-    .status-alert-box {
-      border-radius: 12px;
-      padding: 16px 20px;
-      transition: all 0.3s;
+    /* Minimal Status Line */
+    .live-stage-note {
+      padding: 12px 14px;
+      background: var(--bg-canvas);
+      border-left: 2px solid var(--accent-kopi);
+      border-radius: 4px;
+      font-size: 0.8125rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }
 
-    .btn-kopi {
-      background: #BB8C64;
-      color: #170E08;
+    /* ETA & Utility Bar */
+    .tracker-utility-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Right Column: Compact Receipt & Recent Orders */
+    .section-kicker {
+      font-size: 0.72rem;
       font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .item-row-compact {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(239, 231, 221, 0.05);
+      font-size: 0.8125rem;
+    }
+
+    .item-row-compact:last-child {
+      border-bottom: none;
+    }
+
+    .item-qty {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent-kopi);
+      margin-right: 6px;
+      font-weight: 600;
+    }
+
+    .order-notes-line {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(239, 231, 221, 0.1);
+      font-size: 0.74rem;
+      color: var(--text-secondary);
+    }
+
+    .total-strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-top: 12px;
+      margin-top: 10px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .total-amount-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Compact Recent Orders List */
+    .recent-row-btn {
+      width: 100%;
+      background: transparent;
       border: none;
+      border-bottom: 1px solid rgba(239, 231, 221, 0.06);
+      padding: 9px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: opacity 140ms ease;
     }
-    .btn-kopi:hover {
-      background: #cf9f75;
-      color: #170E08;
+
+    .recent-row-btn:last-child {
+      border-bottom: none;
+    }
+
+    .recent-row-btn:hover {
+      opacity: 0.85;
+    }
+
+    @media print {
+      .tracker-topbar,
+      .tracker-header-bar,
+      .tracker-utility-bar,
+      #recentOrdersSection {
+        display: none !important;
+      }
+      body {
+        background: #fff;
+        color: #000;
+      }
+      .surface-panel {
+        border: 1px solid #000;
+        background: #fff;
+        color: #000;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark bg-opacity-75 border-bottom border-secondary border-opacity-25 sticky-top px-3 py-2">
-    <div class="container">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
-        <img src="assets/kkeopi_logo.jpg" alt="KKEOPI Logo" class="rounded-circle" width="38" height="38" style="border: 1px solid #BB8C64;">
-        <span class="brand-font fs-4 fw-bold text-white">KKEOPI</span>
-      </a>
+  <!-- 3-Zone Top Bar -->
+  <header class="tracker-topbar">
+    <div class="tracker-topbar-inner">
+      <a href="index.html" class="brand-wordmark">KKEOPI</a>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <ul class="top-nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Our Menu</a></li>
+        <li><a href="order-status.html" class="active">Live Tracker</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="gallery.html">Gallery</a></li>
+      </ul>
 
-      <div class="collapse navbar-collapse" id="navContent">
-        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-2">
-          <li class="nav-item"><a class="nav-link text-light" href="index.html">Home</a></li>
-          <li class="nav-item"><a class="nav-link text-light" href="products.html">Coffee Menu</a></li>
-          <li class="nav-item"><a class="nav-link active text-warning fw-semibold" href="order-status.html">Live Tracker</a></li>
-          <li class="nav-item"><a class="nav-link text-light" href="about.html">About</a></li>
-          <li class="nav-item ms-lg-2">
-            <a href="admin.html" class="btn btn-sm btn-outline-warning rounded-pill px-3">
-              <i class="fa-solid fa-lock me-1"></i> Admin Portal
-            </a>
-          </li>
-        </ul>
+      <div class="d-flex align-items-center gap-2">
+        <a href="products.html" class="top-action-link">Order Cup</a>
+        <a href="admin.html" class="top-action-link">Admin</a>
       </div>
     </div>
-  </nav>
+  </header>
 
-  <!-- Tracker Header -->
-  <div class="container py-4">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
+  <!-- Main Compact Shell -->
+  <main class="tracker-shell">
 
-        <!-- Search Bar / Order ID Selector -->
-        <div class="d-flex flex-wrap gap-2 mb-4 justify-content-between align-items-center">
+    <!-- Header & Compact Order Lookup -->
+    <div class="tracker-header-bar">
+      <div>
+        <h1 class="tracker-title">Order Status</h1>
+        <p class="tracker-subtitle">Live espresso bar queue synchronized with Supabase.</p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <form id="orderLookupForm" class="lookup-form">
+          <div class="lookup-input-wrap">
+            <i class="fa-solid fa-hashtag"></i>
+            <input type="text" id="orderSearchInput" class="lookup-input" placeholder="Order ID (e.g. 1)" aria-label="Order number">
+          </div>
+          <button type="submit" class="btn-minimal primary">Track</button>
+        </form>
+
+        <button type="button" id="trackerAudioBtn" class="btn-minimal" title="Toggle ready notification sound">
+          <i class="fa-solid fa-bell"></i>
+          <span id="trackerAudioLabel">Alert On</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 2-Column Minimalist Content -->
+    <div class="tracker-grid" id="trackerMainCard">
+
+      <!-- Left Column: Live Progress & Stage Details -->
+      <section class="surface-panel">
+        <div class="order-meta-top">
           <div>
-            <h2 class="brand-font fs-2 text-white mb-1">Live Order Tracker</h2>
-            <p class="text-secondary small mb-0">Follow your brew from grind to pickup in real time.</p>
+            <div class="order-id-line">
+              <span class="order-id-number" id="displayOrderId">#--</span>
+              <span aria-hidden="true">·</span>
+              <span id="displayPlacedTime" class="mono-num">--:--</span>
+            </div>
+            <h2 class="customer-heading" id="displayCustomerName">Select or enter an order</h2>
           </div>
 
-          <form id="orderLookupForm" class="d-flex gap-2">
-            <input type="text" id="orderSearchInput" class="form-control form-control-sm bg-dark text-white border-secondary rounded-pill px-3" placeholder="Enter Order # (e.g. 1024)" style="width: 200px;">
-            <button type="submit" class="btn btn-sm btn-kopi rounded-pill px-3">
-              <i class="fa-solid fa-magnifying-glass"></i>
+          <div class="status-indicator-group">
+            <div class="status-text-label" id="displayCurrentStatus">
+              <span class="status-dot"></span>
+              <span>WAITING</span>
+            </div>
+            <div class="elapsed-timer mono-num" id="displayElapsedTimer">Elapsed: --</div>
+          </div>
+        </div>
+
+        <!-- Compact 5-Stage Stepper -->
+        <div class="compact-stepper">
+          <div class="compact-stepper-track"></div>
+          <div class="compact-stepper-fill" id="timelineProgressBar"></div>
+
+          <div class="step-node" id="step-pending">
+            <div class="step-circle"><i class="fa-regular fa-file-lines"></i></div>
+            <span class="step-label">Received</span>
+          </div>
+
+          <div class="step-node" id="step-confirmed">
+            <div class="step-circle"><i class="fa-solid fa-check"></i></div>
+            <span class="step-label">Confirmed</span>
+          </div>
+
+          <div class="step-node" id="step-preparing">
+            <div class="step-circle"><i class="fa-solid fa-fire-burner"></i></div>
+            <span class="step-label">Brewing</span>
+          </div>
+
+          <div class="step-node" id="step-ready">
+            <div class="step-circle"><i class="fa-solid fa-bell-concierge"></i></div>
+            <span class="step-label">Ready</span>
+          </div>
+
+          <div class="step-node" id="step-completed">
+            <div class="step-circle"><i class="fa-solid fa-mug-hot"></i></div>
+            <span class="step-label">Picked Up</span>
+          </div>
+        </div>
+
+        <!-- Concise Status Message Banner -->
+        <div class="live-stage-note" id="statusMessageBanner">
+          <span>Enter your Order ID above or place a drink from the menu to begin live tracking.</span>
+          <span class="mono-num text-secondary" id="displayEtaBadge" style="font-size: 0.72rem; white-space: nowrap;"></span>
+        </div>
+
+        <!-- Bottom Action Strip -->
+        <div class="tracker-utility-bar">
+          <span id="liveSyncTimestamp">Live connection active</span>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn-minimal" id="copyTrackLinkBtn" title="Copy direct tracking link">
+              <i class="fa-regular fa-copy"></i> <span id="copyLinkText">Copy Link</span>
             </button>
-          </form>
+            <button type="button" class="btn-minimal" id="printTicketBtn" title="Print receipt">
+              <i class="fa-solid fa-print"></i> Print
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Compact Itemized Summary + Recent Orders -->
+      <aside class="d-flex flex-column gap-3">
+
+        <!-- Itemized Ticket -->
+        <div class="surface-panel">
+          <div class="section-kicker">
+            <span>Order Summary</span>
+            <a href="products.html" style="color: var(--accent-kopi); text-decoration: none; font-weight: 500;">+ Add Cup</a>
+          </div>
+
+          <div id="orderItemsList">
+            <div class="text-secondary" style="font-size: 0.78rem; padding: 8px 0;">No active order selected.</div>
+          </div>
+
+          <div id="displayOrderNotes" class="order-notes-line d-none"></div>
+
+          <div class="total-strip">
+            <span class="text-secondary" style="font-size: 0.78rem;">Total Amount</span>
+            <span class="total-amount-val" id="displayTotalAmount">₱0.00</span>
+          </div>
         </div>
 
-        <!-- Real-Time Status Card -->
-        <div class="tracker-card p-4 mb-4" id="trackerMainCard">
-
-          <!-- Order Header -->
-          <div class="d-flex flex-wrap justify-content-between align-items-start border-bottom border-secondary border-opacity-25 pb-3 mb-4">
-            <div>
-              <span class="badge bg-warning text-dark fw-bold px-3 py-1 mb-2 fs-6" id="displayOrderId">Loading...</span>
-              <h4 class="text-white mb-1" id="displayCustomerName">Order Details</h4>
-              <p class="text-secondary small mb-0" id="displayPlacedTime">Placed at: --:--</p>
-            </div>
-
-            <div class="text-end">
-              <span class="badge bg-secondary px-3 py-2 fs-6 text-uppercase" id="displayCurrentStatus">PENDING</span>
-              <div class="small text-success mt-1 d-flex align-items-center gap-1 justify-content-end">
-                <i class="fa-solid fa-bolt"></i> Live Real-Time Feed
-              </div>
-            </div>
+        <!-- Recent Orders Switcher -->
+        <div class="surface-panel" id="recentOrdersSection">
+          <div class="section-kicker">
+            <span>Recent Orders</span>
+            <span id="recentOrdersCount" class="mono-num text-secondary">0</span>
           </div>
-
-          <!-- Stepper Progress -->
-          <div class="step-timeline">
-            <div class="step-timeline-progress" id="timelineProgressBar"></div>
-
-            <div class="step-item" id="step-pending">
-              <div class="step-circle"><i class="fa-regular fa-clipboard"></i></div>
-              <div class="step-label">Order Received</div>
-            </div>
-
-            <div class="step-item" id="step-confirmed">
-              <div class="step-circle"><i class="fa-solid fa-circle-check"></i></div>
-              <div class="step-label">Confirmed</div>
-            </div>
-
-            <div class="step-item" id="step-preparing">
-              <div class="step-circle"><i class="fa-solid fa-fire-burner"></i></div>
-              <div class="step-label">Brewing / Prep</div>
-            </div>
-
-            <div class="step-item" id="step-ready">
-              <div class="step-circle"><i class="fa-solid fa-bell-concierge"></i></div>
-              <div class="step-label">Ready for Pickup</div>
-            </div>
-
-            <div class="step-item" id="step-completed">
-              <div class="step-circle"><i class="fa-solid fa-mug-hot"></i></div>
-              <div class="step-label">Completed</div>
-            </div>
-          </div>
-
-          <!-- Dynamic Status Banner Message -->
-          <div class="status-alert-box bg-dark border border-secondary border-opacity-25 text-center my-4" id="statusMessageBanner">
-            <div class="spinner-border spinner-border-sm text-warning me-2"></div>
-            Connecting to live barista station...
-          </div>
-
-          <!-- Items Ordered Breakdown -->
-          <div class="bg-black bg-opacity-40 p-3 rounded-3 border border-secondary border-opacity-10 mb-3">
-            <h6 class="text-secondary small text-uppercase fw-semibold mb-3">Items Ordered</h6>
-            <div id="orderItemsList">
-              <!-- Dynamically rendered -->
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center pt-3 mt-3 border-top border-secondary border-opacity-25">
-              <span class="text-secondary">Total Paid / Due</span>
-              <span class="fs-4 fw-bold text-white" id="displayTotalAmount">₱0</span>
-            </div>
-          </div>
-
-          <div class="text-center pt-2">
-            <a href="products.html" class="btn btn-outline-light btn-sm rounded-pill px-4">
-              <i class="fa-solid fa-plus me-1"></i> Order More Coffee
-            </a>
-          </div>
-
-        </div>
-
-        <!-- Recent Customer Orders Section -->
-        <div class="card bg-dark border-secondary border-opacity-25 rounded-3 p-4">
-          <h5 class="text-white brand-font fs-4 mb-3"><i class="fa-solid fa-clock-rotate-left text-warning me-2"></i>Your Recent Orders</h5>
           <div id="recentOrdersContainer">
-            <p class="text-secondary small">Looking up your orders...</p>
+            <div class="text-secondary" style="font-size: 0.76rem;">Looking up recent tickets...</div>
           </div>
         </div>
 
-      </div>
+      </aside>
     </div>
-  </div>
+
+  </main>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

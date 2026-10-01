@@ -1,35 +1,44 @@
 /**
- * KKEOPI Coffee — Minimal, Functional Admin Dashboard
- * Strictly API-driven with real database data & WebSockets
+ * KKEOPI Coffee — Minimalist Dirty-White Admin Console & Live KDS Board
+ * Directly connected to Supabase PostgreSQL + Realtime + BroadcastChannel
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
   const client = window.kopiClient;
 
-  // Local state strictly initialized to empty
+  // Local state
   let allOrders = [];
   let allProducts = [];
   let activeFilter = 'ALL';
+  let activeViewMode = 'TABLE'; // 'TABLE' or 'KDS'
   let orderSearchQuery = '';
   let productCategoryFilter = '';
   let productSearchQuery = '';
   let soundEnabled = true;
 
-  // Modals
+  // Bootstrap Modals
   const addProductModalEl = document.getElementById('addProductModal');
   const editProductModalEl = document.getElementById('editProductModal');
+  const orderTicketModalEl = document.getElementById('orderTicketModal');
   const addProductModal = addProductModalEl ? new bootstrap.Modal(addProductModalEl) : null;
   const editProductModal = editProductModalEl ? new bootstrap.Modal(editProductModalEl) : null;
+  const orderTicketModal = orderTicketModalEl ? new bootstrap.Modal(orderTicketModalEl) : null;
 
   // Toast
   const toastEl = document.getElementById('liveOrderToast');
   const toastMsgEl = document.getElementById('toastMessage');
-  const liveToast = toastEl ? new bootstrap.Toast(toastEl, { delay: 4000 }) : null;
+  const liveToast = toastEl ? new bootstrap.Toast(toastEl, { delay: 3800 }) : null;
+
+  function notifyToast(msg) {
+    if (toastMsgEl && liveToast) {
+      toastMsgEl.textContent = msg;
+      liveToast.show();
+    }
+  }
 
   // DOM Elements - Navigation & Status
   const navOrdersBadge = document.getElementById('navOrdersBadge');
   const navProductsBadge = document.getElementById('navProductsBadge');
-  const wsStatusBadge = document.getElementById('wsStatusBadge');
   const wsLiveIndicator = document.getElementById('wsLiveIndicator');
   const wsStatusText = document.getElementById('wsStatusText');
   const soundToggleBtn = document.getElementById('soundToggleBtn');
@@ -42,7 +51,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // DOM Elements - Orders View
   const orderFilters = document.getElementById('orderFilters');
+  const viewModeTableBtn = document.getElementById('viewModeTableBtn');
+  const viewModeKdsBtn = document.getElementById('viewModeKdsBtn');
   const orderSearchInput = document.getElementById('orderSearchInput');
+  const exportOrdersCsvBtn = document.getElementById('exportOrdersCsvBtn');
   const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
   const retryOrdersBtn = document.getElementById('retryOrdersBtn');
   const ordersLoading = document.getElementById('ordersLoading');
@@ -53,6 +65,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ordersFilterEmptyText = document.getElementById('ordersFilterEmptyText');
   const ordersTableWrapper = document.getElementById('ordersTableWrapper');
   const ordersTableBody = document.getElementById('ordersTableBody');
+  const ordersKdsWrapper = document.getElementById('ordersKdsWrapper');
+  const kdsColPending = document.getElementById('kdsColPending');
+  const kdsColPreparing = document.getElementById('kdsColPreparing');
+  const kdsColReady = document.getElementById('kdsColReady');
+  const kdsCountPending = document.getElementById('kdsCountPending');
+  const kdsCountPreparing = document.getElementById('kdsCountPreparing');
+  const kdsCountReady = document.getElementById('kdsCountReady');
+
+  // DOM Elements - Ticket Modal
+  const thermalTicketContent = document.getElementById('thermalTicketContent');
+  const printModalTicketBtn = document.getElementById('printModalTicketBtn');
 
   // DOM Elements - Products View
   const openAddProductModalBtn = document.getElementById('openAddProductModalBtn');
@@ -68,7 +91,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const productsTableWrapper = document.getElementById('productsTableWrapper');
   const productsTableBody = document.getElementById('productsTableBody');
 
-  // Helper: Escape HTML
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -79,7 +101,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       .replace(/'/g, '&#039;');
   }
 
-  // Format timestamp
   function formatTime(isoStr) {
     if (!isoStr) return '';
     try {
@@ -90,29 +111,157 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  function formatRelativeElapsed(isoStr) {
+    if (!isoStr) return '';
+    try {
+      const diffSec = Math.max(0, Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000));
+      if (diffSec < 60) return `${diffSec}s ago`;
+      const mins = Math.floor(diffSec / 60);
+      if (mins < 60) return `${mins}m ago`;
+      const hrs = Math.floor(mins / 60);
+      return `${hrs}h ${mins % 60}m`;
+    } catch {
+      return '';
+    }
+  }
+
+  // Keyboard shortcut: press '/' to focus search input
+  document.addEventListener('keydown', (e) => {
+    if (
+      e.key === '/' &&
+      document.activeElement &&
+      !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)
+    ) {
+      e.preventDefault();
+      if (orderSearchInput) orderSearchInput.focus();
+    }
+  });
+
   // --- AUDIO ALERT TOGGLE ---
   if (soundToggleBtn) {
     soundToggleBtn.addEventListener('click', () => {
       soundEnabled = !soundEnabled;
       soundToggleBtn.innerHTML = soundEnabled
-        ? '<i class="fa-solid fa-volume-high me-1"></i> <span class="d-none d-sm-inline">Chime: </span>ON'
-        : '<i class="fa-solid fa-volume-xmark me-1"></i> <span class="d-none d-sm-inline">Chime: </span>MUTED';
-      soundToggleBtn.classList.toggle('btn-outline-secondary', soundEnabled);
-      soundToggleBtn.classList.toggle('btn-outline-danger', !soundEnabled);
+        ? '<i class="fa-solid fa-volume-high"></i> <span class="d-none d-md-inline">Chime: ON</span>'
+        : '<i class="fa-solid fa-volume-xmark"></i> <span class="d-none d-md-inline">Muted</span>';
+      if (soundEnabled && client?.playChime) {
+        client.playChime('ping');
+      }
     });
   }
 
-  // --- WEBSOCKET CONNECTION INDICATOR ---
+  // --- VIEW MODE SWITCHER (TABLE vs KDS BOARD) ---
+  if (viewModeTableBtn && viewModeKdsBtn) {
+    viewModeTableBtn.addEventListener('click', () => {
+      activeViewMode = 'TABLE';
+      viewModeTableBtn.classList.add('active');
+      viewModeKdsBtn.classList.remove('active');
+      renderOrders();
+    });
+
+    viewModeKdsBtn.addEventListener('click', () => {
+      activeViewMode = 'KDS';
+      viewModeKdsBtn.classList.add('active');
+      viewModeTableBtn.classList.remove('active');
+      renderOrders();
+    });
+  }
+
+  // --- CSV EXPORT ---
+  if (exportOrdersCsvBtn) {
+    exportOrdersCsvBtn.addEventListener('click', () => {
+      if (allOrders.length === 0) {
+        notifyToast('No orders available to export.');
+        return;
+      }
+      const headers = ['Order ID', 'Created At', 'Customer Name', 'Email', 'Status', 'Total PHP', 'Items', 'Notes'];
+      const rows = allOrders.map((o) => {
+        const itemsText = (o.items || [])
+          .map((it) => `${it.quantity}x ${it.product_name}`)
+          .join('; ');
+        return [
+          o.id,
+          o.created_at || '',
+          `"${String(o.customer_name || '').replace(/"/g, '""')}"`,
+          `"${String(o.customer_email || '').replace(/"/g, '""')}"`,
+          o.status,
+          Number(o.total_amount || 0).toFixed(2),
+          `"${itemsText.replace(/"/g, '""')}"`,
+          `"${String(o.notes || '').replace(/"/g, '""')}"`,
+        ].join(',');
+      });
+      const csvContent = [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `kkeopi-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      notifyToast(`Exported ${allOrders.length} orders to CSV.`);
+    });
+  }
+
+  // --- PRINTABLE THERMAL TICKET MODAL ---
+  function openTicketModal(order) {
+    if (!thermalTicketContent) return;
+    const dt = new Date(order.created_at);
+    const itemsHtml = (order.items || [])
+      .map(
+        (it) => `
+        <div class="d-flex justify-content-between py-1" style="border-bottom: 1px dotted #D5CFC4;">
+          <span>${it.quantity}x ${escapeHtml(it.product_name)}</span>
+          <span>₱${Number(it.subtotal || it.price * it.quantity).toFixed(2)}</span>
+        </div>
+      `
+      )
+      .join('');
+
+    thermalTicketContent.innerHTML = `
+      <div class="text-center pb-2 mb-2" style="border-bottom: 1px dashed #968F85;">
+        <div class="fw-bold" style="font-size: 0.9rem; letter-spacing: 0.08em;">KKEOPI ESPRESSO BAR</div>
+        <div class="text-muted" style="font-size: 0.68rem;">Ticket #${escapeHtml(order.id)} · ${escapeHtml(order.status)}</div>
+      </div>
+      <div class="mb-2" style="font-size: 0.72rem;">
+        <div><strong>Customer:</strong> ${escapeHtml(order.customer_name || 'Guest')}</div>
+        <div><strong>Time:</strong> ${isNaN(dt.getTime()) ? '--' : dt.toLocaleString()}</div>
+      </div>
+      <div class="my-2">
+        ${itemsHtml || '<div>No items</div>'}
+      </div>
+      ${
+        order.notes
+          ? `<div class="p-2 my-2" style="background: #F3EFE6; border-radius: 4px; font-size: 0.7rem;">
+              <strong>Note:</strong> ${escapeHtml(order.notes)}
+            </div>`
+          : ''
+      }
+      <div class="d-flex justify-content-between pt-2 mt-2 fw-bold" style="border-top: 1px dashed #968F85; font-size: 0.85rem;">
+        <span>TOTAL</span>
+        <span>₱${Number(order.total_amount || 0).toFixed(2)}</span>
+      </div>
+    `;
+
+    if (orderTicketModal) orderTicketModal.show();
+  }
+
+  if (printModalTicketBtn) {
+    printModalTicketBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  // --- LIVE CONNECTION INDICATOR ---
   function updateWsStatus(connected) {
     if (!wsLiveIndicator || !wsStatusText) return;
     if (connected) {
       wsLiveIndicator.className = 'live-indicator bg-success';
-      wsStatusText.textContent = 'Live';
-      wsStatusText.className = 'small text-success fw-medium';
+      wsStatusText.textContent = 'Supabase Live';
     } else {
-      wsLiveIndicator.className = 'live-indicator bg-danger';
-      wsStatusText.textContent = 'Reconnecting...';
-      wsStatusText.className = 'small text-danger';
+      wsLiveIndicator.className = 'live-indicator bg-warning';
+      wsStatusText.textContent = 'Syncing...';
     }
   }
 
@@ -121,12 +270,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateWsStatus(connected);
     });
 
-    // Handle real-time incoming orders from customers
     client.on('order:created', (payload) => {
       const order = payload.order || payload;
       if (!order || !order.id) return;
 
-      // Avoid duplicate if already exists
       const exists = allOrders.some((o) => String(o.id) === String(order.id));
       if (!exists) {
         allOrders.unshift(order);
@@ -136,16 +283,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         client.playChime('order');
       }
 
-      if (toastMsgEl && liveToast) {
-        toastMsgEl.textContent = `New Order #${order.id} from ${order.customer_name || 'Customer'} (₱${Number(order.total_amount || 0).toFixed(2)})`;
-        liveToast.show();
-      }
+      notifyToast(
+        `New Order #${order.id} · ${order.customer_name || 'Guest'} (₱${Number(order.total_amount || 0).toFixed(2)})`
+      );
 
       updateSummaryStats();
       renderOrders();
     });
 
-    // Handle real-time order status updates
     client.on('order:status_updated', (payload) => {
       const order = payload.order || payload;
       if (!order) return;
@@ -158,7 +303,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       renderOrders();
     });
 
-    // Handle real-time product updates
     client.on('product:created', (prod) => {
       if (!prod || !prod.id) return;
       if (!allProducts.some((p) => p.id === prod.id)) {
@@ -181,7 +325,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       renderProducts();
     });
 
-    // Polling fallback for XAMPP/PHP environments without WebSocket daemon
     client.on('poll:tick', async () => {
       try {
         const res = await client.getOrders();
@@ -192,10 +335,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (newOrders.length > 0 && existingIds.size > 0) {
             const latest = newOrders[0];
             if (soundEnabled && client.playChime) client.playChime('order');
-            if (toastMsgEl && liveToast) {
-              toastMsgEl.textContent = `New Order #${latest.id} from ${latest.customer_name || 'Customer'} (₱${Number(latest.total_amount || 0).toFixed(2)})`;
-              liveToast.show();
-            }
+            notifyToast(
+              `New Order #${latest.id} · ${latest.customer_name || 'Guest'} (₱${Number(latest.total_amount || 0).toFixed(2)})`
+            );
           }
           updateSummaryStats();
           renderOrders();
@@ -206,7 +348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // --- STATS CALCULATION (DERIVED STRICTLY FROM REAL DATABASE ORDERS) ---
+  // --- STATS CALCULATION ---
   function updateSummaryStats() {
     const today = new Date().toDateString();
     const todayOrders = allOrders.filter((o) => {
@@ -217,7 +359,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    const pendingCount = allOrders.filter((o) => o.status === 'PENDING').length;
+    const pendingCount = allOrders.filter((o) => o.status === 'PENDING' || o.status === 'CONFIRMED').length;
     const preparingCount = allOrders.filter((o) => o.status === 'PREPARING').length;
     const readyCount = allOrders.filter((o) => o.status === 'READY').length;
     const completedCount = allOrders.filter((o) => o.status === 'COMPLETED').length;
@@ -232,7 +374,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (statPreparingOrders) statPreparingOrders.textContent = preparingCount;
     if (statTodaySales) statTodaySales.textContent = `₱${todaySales.toFixed(2)}`;
 
-    // Update filter badge counts
     const countAllEl = document.getElementById('filterCountAll');
     const countPendingEl = document.getElementById('filterCountPending');
     const countPreparingEl = document.getElementById('filterCountPreparing');
@@ -250,13 +391,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (navOrdersBadge) navOrdersBadge.textContent = pendingCount > 0 ? pendingCount : allOrders.length;
   }
 
-  // --- FETCH ORDERS FROM LARAVEL API ---
+  // --- FETCH ORDERS ---
   async function fetchOrders() {
     ordersLoading.classList.remove('d-none');
     ordersError.classList.add('d-none');
     ordersEmpty.classList.add('d-none');
     ordersFilterEmpty.classList.add('d-none');
     ordersTableWrapper.classList.add('d-none');
+    if (ordersKdsWrapper) ordersKdsWrapper.classList.add('d-none');
 
     try {
       const res = await client.getOrders();
@@ -273,30 +415,122 @@ document.addEventListener('DOMContentLoaded', async () => {
       ordersLoading.classList.add('d-none');
       ordersError.classList.remove('d-none');
       if (ordersErrorDetail) {
-        ordersErrorDetail.textContent = err.message || 'Connection error. Please verify the API is operational.';
+        ordersErrorDetail.textContent = err.message || 'Connection error.';
       }
-      console.error('[Admin] Error fetching orders:', err);
     }
   }
 
-  // --- RENDER ORDERS TABLE ---
+  // --- RENDER KDS KANBAN BOARD ---
+  function renderKdsBoard(filteredOrders) {
+    if (!ordersKdsWrapper) return;
+
+    const pendingList = filteredOrders.filter((o) => o.status === 'PENDING' || o.status === 'CONFIRMED');
+    const prepList = filteredOrders.filter((o) => o.status === 'PREPARING');
+    const readyList = filteredOrders.filter((o) => o.status === 'READY');
+
+    if (kdsCountPending) kdsCountPending.textContent = pendingList.length;
+    if (kdsCountPreparing) kdsCountPreparing.textContent = prepList.length;
+    if (kdsCountReady) kdsCountReady.textContent = readyList.length;
+
+    function buildKdsTicketHtml(order, nextStatus, nextBtnLabel, nextBtnClass) {
+      const elapsed = formatRelativeElapsed(order.created_at);
+      const itemsHtml = (order.items || [])
+        .map(
+          (it) => `
+          <div class="d-flex justify-content-between py-1" style="font-size: 0.78rem; border-bottom: 1px solid rgba(221, 216, 206, 0.45);">
+            <span><strong class="mono-num">${it.quantity}×</strong> ${escapeHtml(it.product_name)}</span>
+          </div>
+        `
+        )
+        .join('');
+
+      return `
+        <div class="kds-ticket">
+          <div class="kds-ticket-top">
+            <div>
+              <span class="mono-num fw-bold">#${escapeHtml(order.id)}</span>
+              <span class="text-muted"> · </span>
+              <span class="fw-semibold">${escapeHtml(order.customer_name || 'Guest')}</span>
+            </div>
+            <span class="mono-num text-muted" style="font-size: 0.7rem;">${escapeHtml(elapsed)}</span>
+          </div>
+          <div class="mb-2">${itemsHtml}</div>
+          ${
+            order.notes
+              ? `<div class="p-1 mb-2 rounded" style="background: #F2EFE9; font-size: 0.71rem; color: #68625B;">
+                  ${escapeHtml(order.notes)}
+                </div>`
+              : ''
+          }
+          <div class="d-flex justify-content-between align-items-center pt-1">
+            <span class="mono-num fw-semibold" style="font-size: 0.78rem;">₱${Number(order.total_amount || 0).toFixed(2)}</span>
+            <div class="d-flex gap-1">
+              <button type="button" class="btn-dirty py-1 px-2 open-ticket-btn" data-id="${order.id}" title="Print Cup Ticket">
+                <i class="fa-solid fa-receipt"></i>
+              </button>
+              <button type="button" class="${nextBtnClass} py-1 px-2 status-action-btn" data-id="${order.id}" data-status="${nextStatus}">
+                ${nextBtnLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (kdsColPending) {
+      kdsColPending.innerHTML =
+        pendingList
+          .map((o) => buildKdsTicketHtml(o, 'PREPARING', 'Start Brew →', 'btn-primary'))
+          .join('') || '<div class="text-muted small py-3 text-center">No pending tickets</div>';
+    }
+    if (kdsColPreparing) {
+      kdsColPreparing.innerHTML =
+        prepList
+          .map((o) => buildKdsTicketHtml(o, 'READY', 'Mark Ready →', 'btn-success'))
+          .join('') || '<div class="text-muted small py-3 text-center">Espresso bar clear</div>';
+    }
+    if (kdsColReady) {
+      kdsColReady.innerHTML =
+        readyList
+          .map((o) => buildKdsTicketHtml(o, 'COMPLETED', 'Complete ✓', 'btn-dirty'))
+          .join('') || '<div class="text-muted small py-3 text-center">No cups waiting at counter</div>';
+    }
+
+    ordersKdsWrapper.querySelectorAll('.status-action-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await updateStatus(btn.dataset.id, btn.dataset.status, btn);
+      });
+    });
+
+    ordersKdsWrapper.querySelectorAll('.open-ticket-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const ord = allOrders.find((o) => String(o.id) === String(btn.dataset.id));
+        if (ord) openTicketModal(ord);
+      });
+    });
+  }
+
+  // --- RENDER ORDERS ---
   function renderOrders() {
     ordersLoading.classList.add('d-none');
     ordersError.classList.add('d-none');
 
-    // If database has literally no orders
     if (allOrders.length === 0) {
       ordersEmpty.classList.remove('d-none');
       ordersFilterEmpty.classList.add('d-none');
       ordersTableWrapper.classList.add('d-none');
+      if (ordersKdsWrapper) ordersKdsWrapper.classList.add('d-none');
       return;
     }
     ordersEmpty.classList.add('d-none');
 
-    // Filter by status & search query
     let filtered = allOrders;
     if (activeFilter !== 'ALL') {
-      filtered = filtered.filter((o) => o.status === activeFilter);
+      if (activeFilter === 'PENDING') {
+        filtered = filtered.filter((o) => o.status === 'PENDING' || o.status === 'CONFIRMED');
+      } else {
+        filtered = filtered.filter((o) => o.status === activeFilter);
+      }
     }
 
     if (orderSearchQuery) {
@@ -309,13 +543,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Filter empty state
+    // If KDS Board mode is active
+    if (activeViewMode === 'KDS') {
+      ordersFilterEmpty.classList.add('d-none');
+      ordersTableWrapper.classList.add('d-none');
+      if (ordersKdsWrapper) {
+        ordersKdsWrapper.classList.remove('d-none');
+        renderKdsBoard(filtered);
+      }
+      return;
+    }
+
+    if (ordersKdsWrapper) ordersKdsWrapper.classList.add('d-none');
+
     if (filtered.length === 0) {
       ordersFilterEmpty.classList.remove('d-none');
       ordersTableWrapper.classList.add('d-none');
       if (ordersFilterEmptyText) {
         ordersFilterEmptyText.textContent = orderSearchQuery
-          ? `No orders found matching "${orderSearchQuery}".`
+          ? `No orders matching "${orderSearchQuery}".`
           : `No ${activeFilter.toLowerCase()} orders.`;
       }
       return;
@@ -327,51 +573,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     ordersTableBody.innerHTML = filtered
       .map((order) => {
         const timeStr = formatTime(order.created_at);
+        const relStr = formatRelativeElapsed(order.created_at);
         const itemsList = (order.items || [])
           .map(
             (it) => `
-            <div class="small text-nowrap">
-              <span class="fw-semibold">${it.quantity}x</span> ${escapeHtml(it.product_name)}
-              <span class="text-muted">(₱${Number(it.subtotal || it.price * it.quantity).toFixed(2)})</span>
+            <div style="font-size: 0.79rem;">
+              <span class="mono-num fw-semibold">${it.quantity}×</span> ${escapeHtml(it.product_name)}
+              <span class="text-muted mono-num">(₱${Number(it.subtotal || it.price * it.quantity).toFixed(2)})</span>
             </div>
           `
           )
           .join('');
 
-        // Action buttons tailored to current status
         let actionButtons = '';
-        if (order.status === 'PENDING') {
+        if (order.status === 'PENDING' || order.status === 'CONFIRMED') {
           actionButtons = `
-            <button class="btn btn-sm btn-primary py-0 px-2 status-action-btn" data-id="${order.id}" data-status="PREPARING">
-              Prepare
-            </button>
-            <button class="btn btn-sm btn-outline-danger py-0 px-2 status-action-btn" data-id="${order.id}" data-status="CANCELLED">
-              Cancel
-            </button>
-          `;
-        } else if (order.status === 'CONFIRMED') {
-          actionButtons = `
-            <button class="btn btn-sm btn-primary py-0 px-2 status-action-btn" data-id="${order.id}" data-status="PREPARING">
+            <button class="btn-primary py-1 px-2 status-action-btn" data-id="${order.id}" data-status="PREPARING">
               Prepare
             </button>
           `;
         } else if (order.status === 'PREPARING') {
           actionButtons = `
-            <button class="btn btn-sm btn-success py-0 px-2 status-action-btn" data-id="${order.id}" data-status="READY">
+            <button class="btn-success py-1 px-2 status-action-btn" data-id="${order.id}" data-status="READY">
               Mark Ready
             </button>
           `;
         } else if (order.status === 'READY') {
           actionButtons = `
-            <button class="btn btn-sm btn-dark py-0 px-2 status-action-btn" data-id="${order.id}" data-status="COMPLETED">
+            <button class="btn-dirty py-1 px-2 status-action-btn" data-id="${order.id}" data-status="COMPLETED">
               Complete
             </button>
           `;
         }
 
-        // Status select dropdown for complete administrative override
         const statusSelect = `
-          <select class="form-select form-select-sm py-0 px-1 status-select-dropdown" data-id="${order.id}" style="width: auto; font-size: 0.775rem;">
+          <select class="form-select py-1 px-2 status-select-dropdown" data-id="${order.id}" style="width: auto; font-size: 0.74rem;">
             <option value="PENDING" ${order.status === 'PENDING' ? 'selected' : ''}>Pending</option>
             <option value="PREPARING" ${order.status === 'PREPARING' ? 'selected' : ''}>Preparing</option>
             <option value="READY" ${order.status === 'READY' ? 'selected' : ''}>Ready</option>
@@ -383,31 +619,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `
           <tr id="order-row-${order.id}">
             <td>
-              <div class="fw-bold">#${order.id}</div>
-              <div class="text-muted small">${timeStr}</div>
+              <div class="mono-num fw-bold">#${escapeHtml(order.id)}</div>
+              <div class="text-muted mono-num" style="font-size: 0.7rem;">${timeStr} · ${relStr}</div>
             </td>
             <td>
-              <div class="fw-medium">${escapeHtml(order.customer_name || 'Customer')}</div>
-              <div class="text-muted small">${escapeHtml(order.customer_email || '')}</div>
+              <div class="fw-semibold">${escapeHtml(order.customer_name || 'Customer')}</div>
+              ${order.customer_email ? `<div class="text-muted" style="font-size: 0.72rem;">${escapeHtml(order.customer_email)}</div>` : ''}
               ${
                 order.notes
-                  ? `<div class="small text-warning-emphasis bg-warning-subtle p-1 rounded mt-1">
-                      <i class="fa-regular fa-comment-dots me-1"></i>${escapeHtml(order.notes)}
+                  ? `<div class="mt-1 px-2 py-1 rounded" style="background: #EFECE4; color: #57524B; font-size: 0.71rem;">
+                      ${escapeHtml(order.notes)}
                     </div>`
                   : ''
               }
             </td>
             <td>${itemsList || '<span class="text-muted small">No items</span>'}</td>
             <td>
-              <span class="fw-bold">₱${Number(order.total_amount || 0).toFixed(2)}</span>
+              <span class="mono-num fw-bold">₱${Number(order.total_amount || 0).toFixed(2)}</span>
             </td>
             <td>
-              <span class="badge badge-${order.status.toLowerCase()} text-uppercase px-2 py-1">
-                ${order.status}
+              <span class="status-inline status-${String(order.status || 'pending').toLowerCase()}">
+                ${escapeHtml(order.status)}
               </span>
             </td>
             <td class="text-end">
               <div class="d-flex justify-content-end align-items-center gap-1">
+                <button type="button" class="btn-dirty py-1 px-2 open-ticket-btn" data-id="${order.id}" title="View / Print Cup Ticket">
+                  <i class="fa-solid fa-receipt"></i>
+                </button>
                 ${actionButtons}
                 ${statusSelect}
               </div>
@@ -417,26 +656,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       })
       .join('');
 
-    // Attach quick action button listeners
     ordersTableBody.querySelectorAll('.status-action-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        const orderId = btn.dataset.id;
-        const newStatus = btn.dataset.status;
-        await updateStatus(orderId, newStatus, btn);
+        await updateStatus(btn.dataset.id, btn.dataset.status, btn);
       });
     });
 
-    // Attach status dropdown change listeners
     ordersTableBody.querySelectorAll('.status-select-dropdown').forEach((sel) => {
       sel.addEventListener('change', async (e) => {
-        const orderId = sel.dataset.id;
-        const newStatus = e.target.value;
-        await updateStatus(orderId, newStatus, sel);
+        await updateStatus(sel.dataset.id, e.target.value, sel);
+      });
+    });
+
+    ordersTableBody.querySelectorAll('.open-ticket-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const ord = allOrders.find((o) => String(o.id) === String(btn.dataset.id));
+        if (ord) openTicketModal(ord);
       });
     });
   }
 
-  // Update order status via PUT /api/orders/:id/status
   async function updateStatus(orderId, newStatus, triggerEl) {
     if (triggerEl) triggerEl.disabled = true;
     try {
@@ -446,19 +685,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (idx !== -1) {
           allOrders[idx].status = newStatus;
         }
+        notifyToast(`Order #${orderId} → ${newStatus}`);
         updateSummaryStats();
         renderOrders();
       } else {
-        alert('Failed to update order status: ' + (res.error || res.message || 'Unknown error'));
+        notifyToast('Failed to update status: ' + (res.error || 'Unknown error'));
         if (triggerEl) triggerEl.disabled = false;
       }
     } catch (err) {
-      alert('Error updating order: ' + err.message);
+      notifyToast('Error updating order: ' + err.message);
       if (triggerEl) triggerEl.disabled = false;
     }
   }
 
-  // --- ORDER FILTERS & SEARCH EVENT LISTENERS ---
+  // --- ORDER FILTERS & SEARCH ---
   if (orderFilters) {
     orderFilters.addEventListener('click', (e) => {
       const btn = e.target.closest('button');
@@ -477,15 +717,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  if (refreshOrdersBtn) {
-    refreshOrdersBtn.addEventListener('click', fetchOrders);
-  }
+  if (refreshOrdersBtn) refreshOrdersBtn.addEventListener('click', fetchOrders);
+  if (retryOrdersBtn) retryOrdersBtn.addEventListener('click', fetchOrders);
 
-  if (retryOrdersBtn) {
-    retryOrdersBtn.addEventListener('click', fetchOrders);
-  }
-
-  // --- FETCH PRODUCTS FROM LARAVEL API ---
+  // --- FETCH PRODUCTS ---
   async function fetchProducts() {
     productsLoading.classList.remove('d-none');
     productsError.classList.add('d-none');
@@ -507,20 +742,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       productsLoading.classList.add('d-none');
       productsError.classList.remove('d-none');
       if (productsErrorDetail) {
-        productsErrorDetail.textContent = err.message || 'Connection error. Please verify the API is operational.';
+        productsErrorDetail.textContent = err.message || 'Connection error.';
       }
-      console.error('[Admin] Error fetching products:', err);
     }
   }
 
-  // --- RENDER PRODUCTS TABLE ---
+  // --- RENDER PRODUCTS TABLE (WITH 1-CLICK STOCK TOGGLE) ---
   function renderProducts() {
     productsLoading.classList.add('d-none');
     productsError.classList.add('d-none');
 
     if (navProductsBadge) navProductsBadge.textContent = allProducts.length;
 
-    // Real empty database state
     if (allProducts.length === 0) {
       productsEmpty.classList.remove('d-none');
       productsTableWrapper.classList.add('d-none');
@@ -528,7 +761,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     productsEmpty.classList.add('d-none');
 
-    // Filter by category & search
     let filtered = allProducts;
     if (productCategoryFilter) {
       filtered = filtered.filter((p) => p.category === productCategoryFilter);
@@ -545,7 +777,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       productsTableBody.innerHTML = `
         <tr>
           <td colspan="6" class="text-center py-4 text-muted">
-            No products match the selected filters.
+            No menu items match the current filter.
           </td>
         </tr>
       `;
@@ -559,38 +791,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         (prod) => `
         <tr id="prod-row-${prod.id}">
           <td>
-            <img src="${escapeHtml(prod.image)}" alt="${escapeHtml(prod.name)}" class="product-thumb"
-              onerror="this.src='https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=150&q=80'">
+            <img src="${escapeHtml(prod.image)}" alt="${escapeHtml(prod.name)}" class="product-thumb" referrerPolicy="no-referrer"
+              onerror="this.src='assets/kkeopi_logo.jpg'">
           </td>
           <td>
             <div class="fw-semibold">${escapeHtml(prod.name)}</div>
-            ${prod.description ? `<div class="small text-muted text-truncate" style="max-width: 320px;">${escapeHtml(prod.description)}</div>` : ''}
+            ${prod.description ? `<div class="text-muted text-truncate" style="max-width: 340px; font-size: 0.74rem;">${escapeHtml(prod.description)}</div>` : ''}
           </td>
           <td>
-            <span class="fw-bold">₱${Number(prod.price || 0).toFixed(2)}</span>
+            <span class="mono-num fw-bold">₱${Number(prod.price || 0).toFixed(2)}</span>
           </td>
           <td>
-            <span class="badge bg-light text-dark border">${escapeHtml(prod.category || 'General')}</span>
+            <span class="text-secondary" style="font-size: 0.78rem;">${escapeHtml(prod.category || 'Coffee')}</span>
           </td>
           <td>
-            <span class="badge ${prod.is_available ? 'bg-success' : 'bg-secondary'}">
-              ${prod.is_available ? 'Available' : 'Out of Stock'}
-            </span>
+            <button type="button" class="btn-dirty py-1 px-2 toggle-stock-btn" data-id="${prod.id}" title="Click to toggle stock status">
+              <span class="status-inline ${prod.is_available ? 'status-ready' : 'status-cancelled'}">
+                ${prod.is_available ? 'In Stock' : 'Sold Out'}
+              </span>
+            </button>
           </td>
           <td class="text-end">
-            <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1 edit-product-btn" data-id="${prod.id}">
-              Edit
-            </button>
-            <button class="btn btn-sm btn-outline-danger py-0 px-2 delete-product-btn" data-id="${prod.id}">
-              Delete
-            </button>
+            <div class="d-flex justify-content-end gap-1">
+              <button class="btn-dirty py-1 px-2 edit-product-btn" data-id="${prod.id}">
+                Edit
+              </button>
+              <button class="btn-outline-danger py-1 px-2 delete-product-btn" data-id="${prod.id}">
+                Delete
+              </button>
+            </div>
           </td>
         </tr>
       `
       )
       .join('');
 
-    // Attach Edit & Delete button handlers
+    // 1-Click Stock Availability Toggle
+    productsTableBody.querySelectorAll('.toggle-stock-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const prod = allProducts.find((p) => p.id === btn.dataset.id);
+        if (!prod) return;
+        btn.disabled = true;
+        const nextAvail = !prod.is_available;
+        try {
+          const res = await client.updateProduct(prod.id, { is_available: nextAvail });
+          if (res && res.success) {
+            prod.is_available = nextAvail;
+            notifyToast(`${prod.name}: ${nextAvail ? 'In Stock' : 'Sold Out'}`);
+            renderProducts();
+          } else {
+            btn.disabled = false;
+          }
+        } catch {
+          btn.disabled = false;
+        }
+      });
+    });
+
     productsTableBody.querySelectorAll('.edit-product-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const prod = allProducts.find((p) => p.id === btn.dataset.id);
@@ -602,22 +859,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', async () => {
         const prodId = btn.dataset.id;
         const prod = allProducts.find((p) => p.id === prodId);
-        const name = prod ? prod.name : 'this item';
-        if (confirm(`Are you sure you want to delete "${name}"?`)) {
-          btn.disabled = true;
-          try {
-            const res = await client.deleteProduct(prodId);
-            if (res.success) {
-              allProducts = allProducts.filter((p) => p.id !== prodId);
-              renderProducts();
-            } else {
-              alert('Failed to delete product: ' + (res.error || res.message));
-              btn.disabled = false;
-            }
-          } catch (err) {
-            alert('Error deleting product: ' + err.message);
+        btn.disabled = true;
+        try {
+          const res = await client.deleteProduct(prodId);
+          if (res.success) {
+            allProducts = allProducts.filter((p) => p.id !== prodId);
+            notifyToast(`Deleted "${prod?.name || prodId}"`);
+            renderProducts();
+          } else {
+            notifyToast('Failed to delete: ' + (res.error || 'Unknown error'));
             btn.disabled = false;
           }
+        } catch (err) {
+          notifyToast('Error deleting product: ' + err.message);
+          btn.disabled = false;
         }
       });
     });
@@ -640,7 +895,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Handle Add Product Submit (POST /api/products)
   const addProductForm = document.getElementById('addProductForm');
   const addProductError = document.getElementById('addProductError');
   const saveAddProductBtn = document.getElementById('saveAddProductBtn');
@@ -668,8 +922,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           renderProducts();
           if (addProductModal) addProductModal.hide();
           addProductForm.reset();
+          notifyToast(`Added "${res.data.name}" to menu.`);
         } else {
-          addProductError.textContent = res.error || (res.errors ? JSON.stringify(res.errors) : 'Failed to add product');
+          addProductError.textContent =
+            res.error || (res.errors ? JSON.stringify(res.errors) : 'Failed to add product');
           addProductError.classList.remove('d-none');
         }
       } catch (err) {
@@ -677,12 +933,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         addProductError.classList.remove('d-none');
       } finally {
         saveAddProductBtn.disabled = false;
-        saveAddProductBtn.textContent = 'Add Product';
+        saveAddProductBtn.textContent = 'Create Product';
       }
     });
   }
 
-  // Open Edit Product Modal
   function openEditProductModal(prod) {
     document.getElementById('editProdId').value = prod.id;
     document.getElementById('editProdName').value = prod.name;
@@ -695,7 +950,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (editProductModal) editProductModal.show();
   }
 
-  // Handle Edit Product Submit (PUT /api/products/:id)
   const editProductForm = document.getElementById('editProductForm');
   const editProductError = document.getElementById('editProductError');
   const saveEditProductBtn = document.getElementById('saveEditProductBtn');
@@ -726,8 +980,10 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
           renderProducts();
           if (editProductModal) editProductModal.hide();
+          notifyToast(`Updated "${res.data.name}"`);
         } else {
-          editProductError.textContent = res.error || (res.errors ? JSON.stringify(res.errors) : 'Failed to update product');
+          editProductError.textContent =
+            res.error || (res.errors ? JSON.stringify(res.errors) : 'Failed to update product');
           editProductError.classList.remove('d-none');
         }
       } catch (err) {
@@ -740,7 +996,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Product Filter & Search Event Listeners
   if (productCategoryFilterEl) {
     productCategoryFilterEl.addEventListener('change', (e) => {
       productCategoryFilter = e.target.value;
@@ -755,14 +1010,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  if (refreshProductsBtn) {
-    refreshProductsBtn.addEventListener('click', fetchProducts);
-  }
+  if (refreshProductsBtn) refreshProductsBtn.addEventListener('click', fetchProducts);
+  if (retryProductsBtn) retryProductsBtn.addEventListener('click', fetchProducts);
 
-  if (retryProductsBtn) {
-    retryProductsBtn.addEventListener('click', fetchProducts);
-  }
-
-  // --- INITIAL DATA FETCH ---
   await Promise.all([fetchOrders(), fetchProducts()]);
 });

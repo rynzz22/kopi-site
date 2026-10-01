@@ -1,28 +1,39 @@
 /**
- * KKEOPI Coffee — Live Order Tracker JS
+ * KKEOPI Coffee — Minimalist Live Order Tracker
+ * Real-time Supabase + BroadcastChannel + WebSocket status synchronization
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
   const client = window.kopiClient;
 
-  // URL Params & Current Tracking ID
   const urlParams = new URLSearchParams(window.location.search);
   let currentOrderId = urlParams.get('id');
+  let currentOrderData = null;
+  let audioEnabled = true;
+  let elapsedInterval = null;
 
   // DOM Elements
   const displayOrderId = document.getElementById('displayOrderId');
   const displayCustomerName = document.getElementById('displayCustomerName');
   const displayPlacedTime = document.getElementById('displayPlacedTime');
   const displayCurrentStatus = document.getElementById('displayCurrentStatus');
+  const displayElapsedTimer = document.getElementById('displayElapsedTimer');
   const timelineProgressBar = document.getElementById('timelineProgressBar');
   const statusMessageBanner = document.getElementById('statusMessageBanner');
   const orderItemsList = document.getElementById('orderItemsList');
+  const displayOrderNotes = document.getElementById('displayOrderNotes');
   const displayTotalAmount = document.getElementById('displayTotalAmount');
   const recentOrdersContainer = document.getElementById('recentOrdersContainer');
+  const recentOrdersCount = document.getElementById('recentOrdersCount');
   const orderLookupForm = document.getElementById('orderLookupForm');
   const orderSearchInput = document.getElementById('orderSearchInput');
+  const liveSyncTimestamp = document.getElementById('liveSyncTimestamp');
+  const trackerAudioBtn = document.getElementById('trackerAudioBtn');
+  const trackerAudioLabel = document.getElementById('trackerAudioLabel');
+  const copyTrackLinkBtn = document.getElementById('copyTrackLinkBtn');
+  const copyLinkText = document.getElementById('copyLinkText');
+  const printTicketBtn = document.getElementById('printTicketBtn');
 
-  // Stepper Elements
   const stepElements = {
     PENDING: document.getElementById('step-pending'),
     CONFIRMED: document.getElementById('step-confirmed'),
@@ -32,146 +43,326 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   const statusProgressMap = {
-    PENDING: { percent: '10%', message: '☕ Order received! The barista has received your ticket.', badgeClass: 'bg-warning text-dark' },
-    CONFIRMED: { percent: '35%', message: '📋 Order confirmed! Your ticket is queued on the espresso bar.', badgeClass: 'bg-primary' },
-    PREPARING: { percent: '65%', message: '🔥 Brewing in progress! Your beans are freshly ground and milk is steaming.', badgeClass: 'bg-info text-dark' },
-    READY: { percent: '90%', message: '🎉 Your drink is READY for pickup at the counter! Enjoy!', badgeClass: 'bg-success' },
-    COMPLETED: { percent: '100%', message: '✨ Order completed. Thank you for visiting KKEOPI!', badgeClass: 'bg-secondary' },
-    CANCELLED: { percent: '0%', message: '❌ This order was cancelled. Please contact the barista for details.', badgeClass: 'bg-danger' },
+    PENDING: {
+      percent: '8%',
+      message: 'Order received. Queued at the espresso bar.',
+      eta: 'Est. ~5 min',
+      color: '#C6976E',
+    },
+    CONFIRMED: {
+      percent: '32%',
+      message: 'Order confirmed by barista. Preparing cup & ingredients.',
+      eta: 'Est. ~4 min',
+      color: '#C6976E',
+    },
+    PREPARING: {
+      percent: '62%',
+      message: 'Brewing in progress — pulling espresso shots and texturing milk.',
+      eta: 'Est. ~2 min',
+      color: '#F59E0B',
+    },
+    READY: {
+      percent: '88%',
+      message: 'Your drink is ready for pickup at the counter.',
+      eta: 'Ready now',
+      color: '#10B981',
+    },
+    COMPLETED: {
+      percent: '100%',
+      message: 'Order picked up and completed. Enjoy your KKEOPI cup!',
+      eta: 'Completed',
+      color: '#A6998A',
+    },
+    CANCELLED: {
+      percent: '0%',
+      message: 'This order was cancelled. Please check with the barista.',
+      eta: 'Cancelled',
+      color: '#EF4444',
+    },
   };
 
   const stepsOrder = ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED'];
 
-  // Subscribe to real-time WebSocket updates
-  client.on('order:status_updated', (data) => {
-    const updated = data.order || data;
-    if (String(updated.id) === String(currentOrderId) || String(updated.order_id) === String(currentOrderId)) {
-      applyOrderStatus(updated.status, updated);
-      if (updated.status === 'READY') {
-        client.playChime('ready');
-        celebrateReady();
-      } else {
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // Audio alert toggle
+  if (trackerAudioBtn) {
+    trackerAudioBtn.addEventListener('click', () => {
+      audioEnabled = !audioEnabled;
+      if (trackerAudioLabel) {
+        trackerAudioLabel.textContent = audioEnabled ? 'Alert On' : 'Muted';
+      }
+      trackerAudioBtn.style.opacity = audioEnabled ? '1' : '0.6';
+      if (audioEnabled && client?.playChime) {
         client.playChime('ping');
       }
-    }
-  });
+    });
+  }
 
-  // Subscribe to HTTP polling fallback (for XAMPP/PHP environments without WebSockets)
-  let lastKnownStatus = null;
-  client.on('poll:tick', async () => {
-    if (!currentOrderId) return;
-    try {
-      const res = await client.getOrder(currentOrderId);
-      if (res && res.success && res.data) {
-        const order = res.data;
-        if (lastKnownStatus && order.status !== lastKnownStatus) {
-          applyOrderStatus(order.status, order);
-          if (order.status === 'READY') {
+  // Copy link button
+  if (copyTrackLinkBtn) {
+    copyTrackLinkBtn.addEventListener('click', async () => {
+      try {
+        const shareUrl = currentOrderId
+          ? `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(currentOrderId)}`
+          : window.location.href;
+        await navigator.clipboard.writeText(shareUrl);
+        if (copyLinkText) copyLinkText.textContent = 'Copied';
+        setTimeout(() => {
+          if (copyLinkText) copyLinkText.textContent = 'Copy Link';
+        }, 1800);
+      } catch {
+        // Ignore clipboard restrictions
+      }
+    });
+  }
+
+  // Print receipt button
+  if (printTicketBtn) {
+    printTicketBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  // Live Elapsed Timer
+  function updateElapsedDisplay() {
+    if (!displayElapsedTimer || !currentOrderData || !currentOrderData.created_at) return;
+    if (currentOrderData.status === 'COMPLETED' || currentOrderData.status === 'CANCELLED') {
+      displayElapsedTimer.textContent = currentOrderData.status === 'COMPLETED' ? 'Fulfilled' : 'Closed';
+      return;
+    }
+    const createdMs = new Date(currentOrderData.created_at).getTime();
+    if (isNaN(createdMs)) return;
+    const diffSec = Math.max(0, Math.floor((Date.now() - createdMs) / 1000));
+    const mins = Math.floor(diffSec / 60);
+    const secs = diffSec % 60;
+    if (mins >= 60) {
+      const hrs = Math.floor(mins / 60);
+      displayElapsedTimer.textContent = `${hrs}h ${mins % 60}m elapsed`;
+    } else {
+      displayElapsedTimer.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} elapsed`;
+    }
+  }
+
+  function startElapsedTimer() {
+    if (elapsedInterval) clearInterval(elapsedInterval);
+    updateElapsedDisplay();
+    elapsedInterval = setInterval(updateElapsedDisplay, 1000);
+  }
+
+  // Subscribe to real-time updates
+  if (client) {
+    client.on('order:status_updated', (data) => {
+      const updated = data.order || data;
+      const targetId = updated.id || updated.order_id;
+      if (String(targetId) === String(currentOrderId)) {
+        if (currentOrderData) {
+          currentOrderData.status = updated.status;
+        }
+        applyOrderStatus(updated.status, updated);
+        if (audioEnabled && client.playChime) {
+          if (updated.status === 'READY') {
             client.playChime('ready');
             celebrateReady();
           } else {
             client.playChime('ping');
           }
         }
-        lastKnownStatus = order.status;
       }
-    } catch {
-      // Ignore poll error
-    }
-  });
+      renderRecentOrders();
+    });
 
-  // Search handler
-  orderLookupForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const query = orderSearchInput.value.trim();
-    if (query) {
-      window.location.search = `?id=${encodeURIComponent(query)}`;
-    }
-  });
+    client.on('order:created', (payload) => {
+      const created = payload.order || payload;
+      if (created && created.id) {
+        saveRecentOrder(created);
+        if (!currentOrderId) {
+          currentOrderId = created.id;
+          renderOrder(created);
+        } else {
+          renderRecentOrders();
+        }
+      }
+    });
 
-  // Load Order Details
+    let lastKnownStatus = null;
+    client.on('poll:tick', async () => {
+      if (!currentOrderId) return;
+      try {
+        const res = await client.getOrder(currentOrderId);
+        if (res && res.success && res.data) {
+          const order = res.data;
+          if (lastKnownStatus && order.status !== lastKnownStatus) {
+            currentOrderData = order;
+            applyOrderStatus(order.status, order);
+            if (audioEnabled && client.playChime) {
+              if (order.status === 'READY') {
+                client.playChime('ready');
+                celebrateReady();
+              } else {
+                client.playChime('ping');
+              }
+            }
+          }
+          lastKnownStatus = order.status;
+        }
+      } catch {
+        // Ignore poll error
+      }
+    });
+  }
+
+  // Search form submit
+  if (orderLookupForm) {
+    orderLookupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const rawQuery = orderSearchInput.value.trim().replace(/^#/, '');
+      if (rawQuery) {
+        currentOrderId = rawQuery;
+        const newUrl = `${window.location.pathname}?id=${encodeURIComponent(rawQuery)}`;
+        window.history.replaceState({}, '', newUrl);
+        await loadOrder();
+      }
+    });
+  }
+
   async function loadOrder() {
-    // If no order ID in query, pick the latest from storage or fetch latest
+    // 1. If no order ID in URL, check local recent orders
     if (!currentOrderId) {
       try {
         const storedOrders = JSON.parse(localStorage.getItem('kkeopi_recent_orders') || '[]');
-        if (storedOrders.length > 0) {
+        if (storedOrders.length > 0 && storedOrders[0].id) {
           currentOrderId = storedOrders[0].id;
         }
-      } catch (e) {}
+      } catch {
+        // Ignore
+      }
+    }
+
+    // 2. If still no order ID, fetch most recent order from Supabase so tracker is immediately useful
+    if (!currentOrderId && client) {
+      try {
+        const allRes = await client.getOrders();
+        if (allRes && allRes.success && Array.isArray(allRes.data) && allRes.data.length > 0) {
+          currentOrderId = allRes.data[0].id;
+        }
+      } catch {
+        // Ignore
+      }
     }
 
     if (!currentOrderId) {
-      statusMessageBanner.innerHTML = `<span class="text-secondary">Enter your Order # in the box above or place a cup from the <a href="products.html" class="text-warning text-decoration-underline">Menu</a> to start tracking.</span>`;
+      statusMessageBanner.innerHTML = `
+        <span>No order selected yet. Place an order on the <a href="products.html" style="color: var(--accent-kopi);">Menu</a> or enter your Order # above.</span>
+      `;
+      await renderRecentOrders();
       return;
+    }
+
+    if (orderSearchInput) {
+      orderSearchInput.value = currentOrderId;
     }
 
     try {
       const res = await client.getOrder(currentOrderId);
-      if (res.success && res.data) {
+      if (res && res.success && res.data) {
         renderOrder(res.data);
       } else {
-        statusMessageBanner.innerHTML = `<span class="text-danger">Order #${currentOrderId} was not found. Please verify your order number.</span>`;
+        statusMessageBanner.innerHTML = `<span style="color: #EF4444;">Order #${escapeHtml(currentOrderId)} was not found.</span>`;
       }
     } catch (err) {
-      statusMessageBanner.innerHTML = `<span class="text-danger">Failed to connect to order server: ${err.message}</span>`;
+      statusMessageBanner.innerHTML = `<span style="color: #EF4444;">Unable to load Order #${escapeHtml(currentOrderId)}: ${escapeHtml(err.message)}</span>`;
     }
 
-    renderRecentOrders();
+    await renderRecentOrders();
   }
 
   function renderOrder(order) {
-    displayOrderId.textContent = `ORDER #${order.id}`;
-    displayCustomerName.textContent = order.customer_name;
+    currentOrderData = order;
+    displayOrderId.textContent = `#${order.id}`;
+    displayCustomerName.textContent = order.customer_name || 'Guest Customer';
+
     const dt = new Date(order.created_at);
-    displayPlacedTime.textContent = `Placed on ${dt.toLocaleDateString()} at ${dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    displayTotalAmount.textContent = `₱${order.total_amount}`;
+    const timeFormatted = isNaN(dt.getTime())
+      ? '--:--'
+      : dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateFormatted = isNaN(dt.getTime()) ? '' : dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    displayPlacedTime.textContent = `${dateFormatted} · ${timeFormatted}`;
+
+    displayTotalAmount.textContent = `₱${Number(order.total_amount || 0).toFixed(2)}`;
 
     // Render Items
-    orderItemsList.innerHTML = (order.items || [])
-      .map(
-        (it) => `
-      <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-10">
-        <div>
-          <span class="badge bg-secondary me-2">${it.quantity}x</span>
-          <span class="text-light fw-medium">${escapeHtml(it.product_name)}</span>
-        </div>
-        <span class="text-white fw-bold">₱${it.subtotal || it.price * it.quantity}</span>
-      </div>
-    `
-      )
-      .join('');
+    const items = Array.isArray(order.items) ? order.items : [];
+    if (items.length === 0) {
+      orderItemsList.innerHTML = `<div class="text-secondary" style="font-size: 0.76rem;">No items recorded.</div>`;
+    } else {
+      orderItemsList.innerHTML = items
+        .map(
+          (it) => `
+          <div class="item-row-compact">
+            <div style="padding-right: 8px;">
+              <span class="item-qty">${it.quantity}×</span>
+              <span>${escapeHtml(it.product_name)}</span>
+            </div>
+            <span class="mono-num">₱${Number(it.subtotal || it.price * it.quantity).toFixed(2)}</span>
+          </div>
+        `
+        )
+        .join('');
+    }
+
+    // Order Notes
+    if (displayOrderNotes) {
+      if (order.notes && String(order.notes).trim()) {
+        displayOrderNotes.textContent = order.notes;
+        displayOrderNotes.classList.remove('d-none');
+      } else {
+        displayOrderNotes.classList.add('d-none');
+      }
+    }
 
     applyOrderStatus(order.status, order);
-
-    // Save to local recent orders
+    startElapsedTimer();
     saveRecentOrder(order);
   }
 
   function applyOrderStatus(status, order) {
-    const config = statusProgressMap[status] || statusProgressMap['PENDING'];
+    const config = statusProgressMap[status] || statusProgressMap.PENDING;
 
-    displayCurrentStatus.textContent = status;
-    displayCurrentStatus.className = `badge ${config.badgeClass} px-3 py-2 fs-6 text-uppercase`;
-    timelineProgressBar.style.width = config.percent;
-
-    statusMessageBanner.innerHTML = `
-      <div class="fw-semibold text-white mb-1 fs-5">${config.message}</div>
-      <div class="small text-secondary">Updated in real time: ${new Date().toLocaleTimeString()}</div>
+    displayCurrentStatus.style.color = config.color;
+    displayCurrentStatus.innerHTML = `
+      <span class="status-dot"></span>
+      <span>${escapeHtml(status)}</span>
     `;
 
-    // Update stepper classes
-    const currentIdx = stepsOrder.indexOf(status);
+    timelineProgressBar.style.width = config.percent;
+    timelineProgressBar.style.background = status === 'READY' ? '#10B981' : '#C6976E';
 
+    statusMessageBanner.style.borderLeftColor = config.color;
+    statusMessageBanner.innerHTML = `
+      <span>${escapeHtml(config.message)}</span>
+      <span class="mono-num" style="font-size: 0.72rem; color: ${config.color}; white-space: nowrap;">${escapeHtml(config.eta)}</span>
+    `;
+
+    if (liveSyncTimestamp) {
+      liveSyncTimestamp.textContent = `Synced ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    }
+
+    const currentIdx = stepsOrder.indexOf(status);
     stepsOrder.forEach((stepName, idx) => {
       const el = stepElements[stepName];
       if (!el) return;
-
       el.classList.remove('active', 'completed');
-
-      if (status === 'CANCELLED') {
-        // Cancelled state
-      } else if (idx < currentIdx) {
+      if (status === 'CANCELLED') return;
+      if (idx < currentIdx) {
         el.classList.add('completed');
       } else if (idx === currentIdx) {
         el.classList.add('active');
@@ -183,13 +374,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       if (typeof confetti === 'function') {
         confetti({
-          particleCount: 120,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#BB8C64', '#10B981', '#FDFBF7', '#E6A23C'],
+          particleCount: 70,
+          spread: 65,
+          origin: { y: 0.65 },
+          colors: ['#C6976E', '#10B981', '#F5EFE6'],
         });
       }
-    } catch (e) {}
+    } catch {
+      // Ignore
+    }
   }
 
   function saveRecentOrder(order) {
@@ -198,99 +391,88 @@ document.addEventListener('DOMContentLoaded', async () => {
       recents = recents.filter((o) => String(o.id) !== String(order.id));
       recents.unshift({
         id: order.id,
-        total: order.total_amount,
+        customer_name: order.customer_name,
+        total_amount: order.total_amount,
         status: order.status,
-        date: order.created_at,
-        itemsSummary: (order.items || []).map((it) => `${it.quantity}x ${it.product_name}`).join(', '),
+        created_at: order.created_at,
+        itemsSummary: (order.items || []).map((it) => `${it.quantity}× ${it.product_name.split('(')[0].trim()}`).join(', '),
       });
-      localStorage.setItem('kkeopi_recent_orders', JSON.stringify(recents.slice(0, 5)));
-    } catch (e) {}
+      localStorage.setItem('kkeopi_recent_orders', JSON.stringify(recents.slice(0, 6)));
+    } catch {
+      // Ignore
+    }
   }
 
   async function renderRecentOrders() {
-    const user = client.getCurrentUser();
     let orders = [];
 
-    // If authenticated with Supabase, retrieve real customer orders from backend
-    if (user && user.id) {
+    try {
+      const allRes = await client.getOrders();
+      if (allRes && allRes.success && Array.isArray(allRes.data) && allRes.data.length > 0) {
+        orders = allRes.data.slice(0, 5);
+      }
+    } catch {
+      // Fallback to localStorage recent orders
+    }
+
+    if (orders.length === 0) {
       try {
-        const res = await client.getMyOrders();
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          orders = res.data;
-        }
-      } catch (e) {
-        console.warn('Could not fetch user orders:', e);
+        orders = JSON.parse(localStorage.getItem('kkeopi_recent_orders') || '[]');
+      } catch {
+        orders = [];
       }
     }
 
-    if (orders.length > 0) {
-      recentOrdersContainer.innerHTML = `
-        <div class="mb-3 d-flex align-items-center justify-content-between">
-          <span class="small text-warning"><i class="fa-solid fa-user-check me-1"></i> Orders linked to your account (${escapeHtml(user.email)})</span>
-          <span class="badge bg-secondary small">${orders.length} order${orders.length > 1 ? 's' : ''}</span>
-        </div>
-        ${orders
-          .map(
-            (r) => `
-          <div class="d-flex flex-wrap justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-15">
-            <div>
-              <span class="badge bg-warning text-dark me-2">#${r.id}</span>
-              <span class="text-light small">${escapeHtml((r.items || []).map((it) => `${it.quantity}x ${it.product_name}`).join(', ') || 'Items')}</span>
-              <div class="text-secondary small">${new Date(r.created_at).toLocaleString()}</div>
-            </div>
-            <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-              <span class="text-white fw-bold">₱${r.total_amount}</span>
-              <span class="badge ${r.status === 'READY' ? 'bg-success' : r.status === 'COMPLETED' ? 'bg-secondary' : 'bg-warning text-dark'} small">${r.status}</span>
-              <a href="order-status.html?id=${r.id}" class="btn btn-sm btn-outline-light rounded-pill px-2 py-0">Track</a>
-            </div>
-          </div>
-        `
-          )
-          .join('')}
-      `;
+    if (recentOrdersCount) {
+      recentOrdersCount.textContent = orders.length;
+    }
+
+    if (orders.length === 0) {
+      recentOrdersContainer.innerHTML = `<div class="text-secondary" style="font-size: 0.76rem;">No recent orders found.</div>`;
       return;
     }
 
-    // Fallback to local storage recent orders if not logged in
-    try {
-      const recents = JSON.parse(localStorage.getItem('kkeopi_recent_orders') || '[]');
-      if (recents.length === 0) {
-        recentOrdersContainer.innerHTML = `<p class="text-secondary small mb-0">No past orders saved on this device yet. Sign in or place an order to track.</p>`;
-        return;
-      }
+    recentOrdersContainer.innerHTML = orders
+      .map((r) => {
+        const isCurrent = String(r.id) === String(currentOrderId);
+        const summary =
+          r.itemsSummary ||
+          (r.items || []).map((it) => `${it.quantity}× ${String(it.product_name || '').split('(')[0].trim()}`).join(', ') ||
+          'Specialty Order';
+        const total = Number(r.total_amount ?? r.total ?? 0).toFixed(2);
+        return `
+          <button type="button" class="recent-row-btn" data-order-id="${escapeHtml(r.id)}" style="${isCurrent ? 'background: rgba(198, 151, 110, 0.08); border-radius: 6px; padding-left: 8px; padding-right: 8px;' : ''}">
+            <div style="min-width: 0; padding-right: 8px;">
+              <div style="font-size: 0.76rem; font-weight: 600;">
+                <span class="mono-num" style="color: var(--accent-kopi);">#${escapeHtml(r.id)}</span>
+                <span aria-hidden="true" style="color: var(--text-muted);"> · </span>
+                <span>${escapeHtml(r.customer_name || 'Guest')}</span>
+              </div>
+              <div class="text-secondary text-truncate" style="font-size: 0.71rem; max-width: 210px;">
+                ${escapeHtml(summary)}
+              </div>
+            </div>
+            <div class="text-end" style="flex-shrink: 0;">
+              <div class="mono-num" style="font-size: 0.76rem; font-weight: 600;">₱${total}</div>
+              <div class="mono-num" style="font-size: 0.66rem; color: ${r.status === 'READY' ? '#10B981' : 'var(--text-secondary)'};">
+                ${escapeHtml(r.status)}
+              </div>
+            </div>
+          </button>
+        `;
+      })
+      .join('');
 
-      recentOrdersContainer.innerHTML = recents
-        .map(
-          (r) => `
-        <div class="d-flex flex-wrap justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-15">
-          <div>
-            <span class="badge bg-warning text-dark me-2">#${r.id}</span>
-            <span class="text-light small">${escapeHtml(r.itemsSummary || 'Items')}</span>
-            <div class="text-secondary small">${new Date(r.date).toLocaleDateString()}</div>
-          </div>
-          <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
-            <span class="text-white fw-bold">₱${r.total}</span>
-            <span class="badge ${r.status === 'READY' ? 'bg-success' : r.status === 'COMPLETED' ? 'bg-secondary' : 'bg-warning text-dark'} small">${r.status}</span>
-            <a href="order-status.html?id=${r.id}" class="btn btn-sm btn-outline-light rounded-pill px-2 py-0">Track</a>
-          </div>
-        </div>
-      `
-        )
-        .join('');
-    } catch (e) {}
-  }
-
-  client.on('auth:change', () => {
-    renderRecentOrders();
-  });
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+    recentOrdersContainer.querySelectorAll('.recent-row-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const targetId = btn.dataset.orderId;
+        if (!targetId) return;
+        currentOrderId = targetId;
+        const newUrl = `${window.location.pathname}?id=${encodeURIComponent(targetId)}`;
+        window.history.replaceState({}, '', newUrl);
+        await loadOrder();
+      });
+    });
   }
 
   await loadOrder();
