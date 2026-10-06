@@ -23,8 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const orderItemsList = document.getElementById('orderItemsList');
   const displayOrderNotes = document.getElementById('displayOrderNotes');
   const displayTotalAmount = document.getElementById('displayTotalAmount');
-  const recentOrdersContainer = document.getElementById('recentOrdersContainer');
-  const recentOrdersCount = document.getElementById('recentOrdersCount');
   const orderLookupForm = document.getElementById('orderLookupForm');
   const orderSearchInput = document.getElementById('orderSearchInput');
   const liveSyncTimestamp = document.getElementById('liveSyncTimestamp');
@@ -177,20 +175,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }
       }
-      renderRecentOrders();
-    });
-
-    client.on('order:created', (payload) => {
-      const created = payload.order || payload;
-      if (created && created.id) {
-        saveRecentOrder(created);
-        if (!currentOrderId) {
-          currentOrderId = created.id;
-          renderOrder(created);
-        } else {
-          renderRecentOrders();
-        }
-      }
     });
 
     let lastKnownStatus = null;
@@ -235,35 +219,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function loadOrder() {
-    // 1. If no order ID in URL, check local recent orders
-    if (!currentOrderId) {
-      try {
-        const storedOrders = JSON.parse(localStorage.getItem('kkeopi_recent_orders') || '[]');
-        if (storedOrders.length > 0 && storedOrders[0].id) {
-          currentOrderId = storedOrders[0].id;
-        }
-      } catch {
-        // Ignore
-      }
-    }
-
-    // 2. If still no order ID, fetch most recent order from Supabase so tracker is immediately useful
-    if (!currentOrderId && client) {
-      try {
-        const allRes = await client.getOrders();
-        if (allRes && allRes.success && Array.isArray(allRes.data) && allRes.data.length > 0) {
-          currentOrderId = allRes.data[0].id;
-        }
-      } catch {
-        // Ignore
-      }
-    }
-
+    // Only load an order explicitly selected by link or order-number lookup.
     if (!currentOrderId) {
       statusMessageBanner.innerHTML = `
         <span>No order selected yet. Place an order on the <a href="products.html" style="color: var(--accent-kopi);">Menu</a> or enter your Order # above.</span>
       `;
-      await renderRecentOrders();
       return;
     }
 
@@ -282,7 +242,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       statusMessageBanner.innerHTML = `<span style="color: #EF4444;">Unable to load Order #${escapeHtml(currentOrderId)}: ${escapeHtml(err.message)}</span>`;
     }
 
-    await renderRecentOrders();
   }
 
   function renderOrder(order) {
@@ -331,7 +290,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     applyOrderStatus(order.status, order);
     startElapsedTimer();
-    saveRecentOrder(order);
   }
 
   function applyOrderStatus(status, order) {
@@ -383,96 +341,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch {
       // Ignore
     }
-  }
-
-  function saveRecentOrder(order) {
-    try {
-      let recents = JSON.parse(localStorage.getItem('kkeopi_recent_orders') || '[]');
-      recents = recents.filter((o) => String(o.id) !== String(order.id));
-      recents.unshift({
-        id: order.id,
-        customer_name: order.customer_name,
-        total_amount: order.total_amount,
-        status: order.status,
-        created_at: order.created_at,
-        itemsSummary: (order.items || []).map((it) => `${it.quantity}× ${it.product_name.split('(')[0].trim()}`).join(', '),
-      });
-      localStorage.setItem('kkeopi_recent_orders', JSON.stringify(recents.slice(0, 6)));
-    } catch {
-      // Ignore
-    }
-  }
-
-  async function renderRecentOrders() {
-    let orders = [];
-
-    try {
-      const allRes = await client.getOrders();
-      if (allRes && allRes.success && Array.isArray(allRes.data) && allRes.data.length > 0) {
-        orders = allRes.data.slice(0, 5);
-      }
-    } catch {
-      // Fallback to localStorage recent orders
-    }
-
-    if (orders.length === 0) {
-      try {
-        orders = JSON.parse(localStorage.getItem('kkeopi_recent_orders') || '[]');
-      } catch {
-        orders = [];
-      }
-    }
-
-    if (recentOrdersCount) {
-      recentOrdersCount.textContent = orders.length;
-    }
-
-    if (orders.length === 0) {
-      recentOrdersContainer.innerHTML = `<div class="text-secondary" style="font-size: 0.76rem;">No recent orders found.</div>`;
-      return;
-    }
-
-    recentOrdersContainer.innerHTML = orders
-      .map((r) => {
-        const isCurrent = String(r.id) === String(currentOrderId);
-        const summary =
-          r.itemsSummary ||
-          (r.items || []).map((it) => `${it.quantity}× ${String(it.product_name || '').split('(')[0].trim()}`).join(', ') ||
-          'Specialty Order';
-        const total = Number(r.total_amount ?? r.total ?? 0).toFixed(2);
-        return `
-          <button type="button" class="recent-row-btn" data-order-id="${escapeHtml(r.id)}" style="${isCurrent ? 'background: rgba(198, 151, 110, 0.08); border-radius: 6px; padding-left: 8px; padding-right: 8px;' : ''}">
-            <div style="min-width: 0; padding-right: 8px;">
-              <div style="font-size: 0.76rem; font-weight: 600;">
-                <span class="mono-num" style="color: var(--accent-kopi);">#${escapeHtml(r.id)}</span>
-                <span aria-hidden="true" style="color: var(--text-muted);"> · </span>
-                <span>${escapeHtml(r.customer_name || 'Guest')}</span>
-              </div>
-              <div class="text-secondary text-truncate" style="font-size: 0.71rem; max-width: 210px;">
-                ${escapeHtml(summary)}
-              </div>
-            </div>
-            <div class="text-end" style="flex-shrink: 0;">
-              <div class="mono-num" style="font-size: 0.76rem; font-weight: 600;">₱${total}</div>
-              <div class="mono-num" style="font-size: 0.66rem; color: ${r.status === 'READY' ? '#10B981' : 'var(--text-secondary)'};">
-                ${escapeHtml(r.status)}
-              </div>
-            </div>
-          </button>
-        `;
-      })
-      .join('');
-
-    recentOrdersContainer.querySelectorAll('.recent-row-btn').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const targetId = btn.dataset.orderId;
-        if (!targetId) return;
-        currentOrderId = targetId;
-        const newUrl = `${window.location.pathname}?id=${encodeURIComponent(targetId)}`;
-        window.history.replaceState({}, '', newUrl);
-        await loadOrder();
-      });
-    });
   }
 
   await loadOrder();
