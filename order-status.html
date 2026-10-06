@@ -439,7 +439,7 @@
       color: var(--text-secondary);
     }
 
-    /* Right Column: Compact Receipt & Recent Orders */
+    /* Right Column: Compact Receipt */
     .section-kicker {
       font-size: 0.72rem;
       font-weight: 600;
@@ -495,35 +495,10 @@
       color: var(--text-primary);
     }
 
-    /* Compact Recent Orders List */
-    .recent-row-btn {
-      width: 100%;
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid rgba(239, 231, 221, 0.06);
-      padding: 9px 4px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      text-align: left;
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: opacity 140ms ease;
-    }
-
-    .recent-row-btn:last-child {
-      border-bottom: none;
-    }
-
-    .recent-row-btn:hover {
-      opacity: 0.85;
-    }
-
     @media print {
       .tracker-topbar,
       .tracker-header-bar,
-      .tracker-utility-bar,
-      #recentOrdersSection {
+      .tracker-utility-bar {
         display: none !important;
       }
       body {
@@ -663,7 +638,7 @@
         </div>
       </section>
 
-      <!-- Right Column: Compact Itemized Summary + Recent Orders -->
+      <!-- Right Column: Compact Itemized Summary -->
       <aside class="d-flex flex-column gap-3">
 
         <!-- Itemized Ticket -->
@@ -682,17 +657,6 @@
           <div class="total-strip">
             <span class="text-secondary" style="font-size: 0.78rem;">Total Amount</span>
             <span class="total-amount-val" id="displayTotalAmount">₱0.00</span>
-          </div>
-        </div>
-
-        <!-- Recent Orders Switcher -->
-        <div class="surface-panel" id="recentOrdersSection">
-          <div class="section-kicker">
-            <span>Recent Orders</span>
-            <span id="recentOrdersCount" class="mono-num text-secondary">0</span>
-          </div>
-          <div id="recentOrdersContainer">
-            <div class="text-secondary" style="font-size: 0.76rem;">Looking up recent tickets...</div>
           </div>
         </div>
 

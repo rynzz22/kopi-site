@@ -876,20 +876,6 @@ function initCheckoutAndCartSystem() {
                 if (formView) formView.style.display = "none";
                 if (receiptView) receiptView.classList.add("active");
 
-                // Save to local recent orders so customer can track later
-                try {
-                    let recents = JSON.parse(localStorage.getItem('kkeopi_recent_orders') || '[]');
-                    recents = recents.filter(o => String(o.id) !== String(createdOrder.id));
-                    recents.unshift({
-                        id: createdOrder.id,
-                        total: createdOrder.total_amount || totalAmount,
-                        status: "PENDING",
-                        date: new Date().toISOString(),
-                        itemsSummary: cartItems.map(it => `${it.qty}x ${it.title}`).join(', ')
-                    });
-                    localStorage.setItem('kkeopi_recent_orders', JSON.stringify(recents.slice(0, 5)));
-                } catch(e) {}
-
                 cartItems = [];
                 updateCartBadge();
 
