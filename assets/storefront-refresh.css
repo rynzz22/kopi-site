@@ -9,6 +9,9 @@
 .home-picks .pick-icon { width:32px; height:32px; }
 .home-picks>a { background:transparent; box-shadow:none; border:0; border-left:1px solid #dfcbb4; border-radius:0; padding:10px 22px; }
 .home-picks>a:nth-child(3),.home-picks>a:nth-child(4) { background:transparent; }
+/* Keep homepage text and controls above the decorative scroll tide (z-index:20). */
+.customer-site .home-main,
+.customer-site .coffee-footer-content { position:relative; z-index:21; }
 .coffee-footer { margin-top:26px; color:#f9ead6; }
 .coffee-tide { height:120px; overflow:hidden; }
 .coffee-tide svg { display:block; width:100%; height:100%; overflow:hidden; }
