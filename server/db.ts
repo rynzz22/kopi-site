@@ -6,8 +6,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const DEFAULT_SUPABASE_URL = 'https://yyykmhmewczslydoyawq.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5eWttaG1ld2N6c2x5ZG95YXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3OTg1NjYsImV4cCI6MjEwNjM3NDU2Nn0.qmAV-9fU1Uubv96zSfINmLSl8X6-4ZdlvvV_5eafLgE';
-const DEFAULT_SUPABASE_SERVICE_ROLE_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5eWttaG1ld2N6c2x5ZG95YXdxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDc5ODU2NiwiZXhwIjoyMTA2Mzc0NTY2fQ.dnsNNOW4dlAUO5bgSD5nPEJP7Qi-ioj3TRhQNCDuJJc';
+const DEFAULT_SUPABASE_SERVICE_ROLE_KEY = ''; // Server secrets must come from environment variables.
 
 export interface User {
   id: string; // Stable Supabase Auth user UUID

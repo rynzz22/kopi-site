@@ -15,9 +15,12 @@
     <script src="config.js"></script>
     <script src="assets/kopi-client.js"></script>
     <script src="products.js" defer></script>
+  <link rel="stylesheet" href="assets/customer.css">
+  <link rel="stylesheet" href="assets/storefront-refresh.css">
+  <script src="assets/customer.js" defer></script>
 </head>
 
-<body>
+<body class="customer-site">
     <!-- Interactive Liquid Coffee Touching Surface Canvas -->
     <canvas id="coffeeRippleCanvas"></canvas>
 
@@ -32,7 +35,7 @@
     <!-- Floating Food Cart Order Pill -->
     <button class="floatingCart" id="cartTrigger" aria-label="View Food Cart Order">
         <i class="fa-solid fa-bag-shopping"></i>
-        <span class="cart-label">Cart</span>
+        <span class="cart-label">Your bag</span>
         <span id="cartCount">0</span>
     </button>
 
@@ -93,11 +96,13 @@
         <!-- Cart Header / Kiosk Board Banner -->
         <header class="cart-board-header">
             <div class="stand-badge">
-                <span class="live-dot"></span> OPEN TODAY • FRESH BREWS & SLOW-BAKED PASTRIES
+                <span class="live-dot"></span> THE KKEOPI COFFEE MENU
             </div>
-            <h1>Our Menu</h1>
-            <p>Handcrafted Korean specialty extractions, iced teas, and warm flaky bakery items tailored to your taste.</p>
+            <h1>Good days start <em>here.</em></h1>
+            <p>Find your favorite. Make it yours. We will take care of the coffee.</p>
 
+            <label class="menu-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="menuSearch" placeholder="Find your next favorite..." aria-label="Search menu"><span>brewed for you &#9825;</span></label>
+            <p id="menuResults" class="menu-results" role="status"></p>
             <!-- Minimal Category Switcher Filter -->
             <div class="category-filters">
                 <button class="filter-chip active" data-filter="all">All Items (10)</button>
@@ -126,7 +131,7 @@
                         <p class="desc">Velvety milk infused with vanilla, marked with dark espresso & caramel drizzle.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Size</span>
                             <div class="chips size-chips">
@@ -143,7 +148,7 @@
                                 <button class="chip" data-sugar="100%">100%</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -180,7 +185,7 @@
                         <p class="desc">Smooth espresso blended with roasted hazelnut cream and velvety microfoam.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Size</span>
                             <div class="chips size-chips">
@@ -197,7 +202,7 @@
                                 <button class="chip" data-sugar="75%">75%</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -234,7 +239,7 @@
                         <p class="desc">Japanese ceremonial Uji matcha whisked fresh with silky milk & pure cane sugar.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Size</span>
                             <div class="chips size-chips">
@@ -251,7 +256,7 @@
                                 <button class="chip" data-sugar="100%">100%</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -288,7 +293,7 @@
                         <p class="desc">Fresh housemade strawberry compote layered with sweet cream & chilled milk.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Size</span>
                             <div class="chips size-chips">
@@ -305,7 +310,7 @@
                                 <button class="chip" data-sugar="75%">75%</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -342,7 +347,7 @@
                         <p class="desc">Bold espresso sweetened with creamy condensed milk and a hint of cinnamon.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Size</span>
                             <div class="chips size-chips">
@@ -359,7 +364,7 @@
                                 <button class="chip" data-sugar="Extra Sweet">Extra</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -396,7 +401,7 @@
                         <p class="desc">Double shot espresso poured over chilled mountain spring water and clear ice.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Size</span>
                             <div class="chips size-chips">
@@ -412,7 +417,7 @@
                                 <button class="chip" data-sugar="Single Origin">Single Origin</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -449,7 +454,7 @@
                         <p class="desc">Cold-brewed organic crimson hibiscus infused with ripe white peach nectar.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Size</span>
                             <div class="chips size-chips">
@@ -465,7 +470,7 @@
                                 <button class="chip" data-sugar="100%">100%</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -502,7 +507,7 @@
                         <p class="desc">Golden flaky layered pastry made with imported French Normandy butter.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Serve</span>
                             <div class="chips sugar-chips">
@@ -510,7 +515,7 @@
                                 <button class="chip" data-sugar="Room Temp">Room Temp</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -547,7 +552,7 @@
                         <p class="desc">Flaky artisan puff croissant wrapped around two batons of melted dark Belgian chocolate.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Serve</span>
                             <div class="chips sugar-chips">
@@ -555,7 +560,7 @@
                                 <button class="chip" data-sugar="Room Temp">Room Temp</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -592,7 +597,7 @@
                         <p class="desc">Crisp puff pastry pocket filled with slow-simmered cinnamon Fuji apples & glaze.</p>
                     </div>
 
-                    <div class="quick-custom-preview">
+                    <details class="quick-custom-preview"><summary>Make it yours <span>Size & preferences</span></summary>
                         <div class="chip-row">
                             <span class="chip-label">Serve</span>
                             <div class="chips sugar-chips">
@@ -600,7 +605,7 @@
                                 <button class="chip" data-sugar="Room Temp">Room Temp</button>
                             </div>
                         </div>
-                    </div>
+                    </details>
 
                     <div class="cart-actions">
                         <button class="customize-trigger-btn" title="Open Customizer" aria-label="Customize item">
@@ -880,7 +885,7 @@
                             <div class="pay-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
                             <div class="pay-text">
                                 <span class="pay-name">GCash / Maya</span>
-                                <span class="pay-desc">Instant QR Payment</span>
+                                <span class="pay-desc">Arrange payment at pickup</span>
                             </div>
                         </label>
 
@@ -898,7 +903,7 @@
                             <div class="pay-icon"><i class="fa-solid fa-credit-card"></i></div>
                             <div class="pay-text">
                                 <span class="pay-name">Card / Apple Pay</span>
-                                <span class="pay-desc">Contactless Tap</span>
+                                <span class="pay-desc">Arrange payment at pickup</span>
                             </div>
                         </label>
                     </div>
@@ -924,7 +929,7 @@
             <!-- Modal Footer with Animated Pay Button -->
             <div class="modal-footer">
                 <button class="confirm-pay-btn liquid-sheen" id="confirmPayBtn">
-                    <span class="btn-text"><i class="fa-solid fa-lock"></i> Place Order & Pay <span id="payBtnAmount">₱0</span></span>
+                    <span class="btn-text"><i class="fa-solid fa-lock"></i> Place order &middot; <span id="payBtnAmount">₱0</span></span>
                     <span class="btn-brewing-loader">
                         <span class="mini-coffee-spinner"><i class="fa-solid fa-mug-hot"></i></span>
                         <span class="loader-text">Grinding fresh beans & brewing...</span>
@@ -940,7 +945,7 @@
                 <!-- Top Notch / Claim Status Header -->
                 <div class="receipt-status-header">
                     <div class="live-brew-badge">
-                        <span class="live-dot pulse"></span> BREWING AT FOOD CART
+                        <span class="live-dot pulse"></span> ORDER RECEIVED
                     </div>
                     <span class="order-ticket-id" id="receiptTicketId">#KK-8291</span>
                 </div>
@@ -956,7 +961,7 @@
                     </div>
 
                     <h2 class="receipt-headline">Order Placed Successfully!</h2>
-                    <p class="receipt-sub">Thank you, <strong id="receiptCustName">Coffee Lover</strong>! Your artisanal brew is being prepared right now at our food cart.</p>
+                    <p class="receipt-sub">Thank you, <strong id="receiptCustName">Coffee Lover</strong>! Your order has been sent to the team. Follow its progress with the live tracker.</p>
 
                     <!-- Estimated Pickup Box -->
                     <div class="pickup-estimate-box">
@@ -999,10 +1004,10 @@
                         <div class="receipt-summary-totals">
                             <div class="r-row">
                                 <span>Payment Method:</span>
-                                <strong id="receiptPaymentMethod">GCash (Paid)</strong>
+                                <strong id="receiptPaymentMethod">Payment at pickup</strong>
                             </div>
                             <div class="r-row total">
-                                <span>Total Paid:</span>
+                                <span>Order total:</span>
                                 <strong id="receiptTotalPaid">₱0</strong>
                             </div>
                         </div>

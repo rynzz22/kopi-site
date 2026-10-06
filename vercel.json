@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "node scripts/build-static.mjs",
+  "outputDirectory": "dist",
+  "installCommand": "",
+  "rewrites": [
+    { "source": "/", "destination": "/KKEOPI.html" }
+  ]
+}
