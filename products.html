@@ -17,10 +17,11 @@
     <script src="products.js" defer></script>
   <link rel="stylesheet" href="assets/customer.css">
   <link rel="stylesheet" href="assets/storefront-refresh.css">
+  <link rel="stylesheet" href="assets/ordering.css">
   <script src="assets/customer.js" defer></script>
 </head>
 
-<body class="customer-site">
+<body class="customer-site ordering-page">
     <!-- Interactive Liquid Coffee Touching Surface Canvas -->
     <canvas id="coffeeRippleCanvas"></canvas>
 
@@ -99,18 +100,30 @@
                 <span class="live-dot"></span> THE KKEOPI COFFEE MENU
             </div>
             <h1>Good days start <em>here.</em></h1>
-            <p>Find your favorite. Make it yours. We will take care of the coffee.</p>
+            <p>Your daily coffee ritual, made just the way you like it.</p>
+            <ol class="ordering-guide" aria-label="How to order">
+                <li><span>1</span> Find your favorite</li>
+                <li><span>2</span> Make it yours</li>
+                <li><span>3</span> Order &amp; pick up</li>
+            </ol>
 
             <label class="menu-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="menuSearch" placeholder="Find your next favorite..." aria-label="Search menu"><span>brewed for you &#9825;</span></label>
             <p id="menuResults" class="menu-results" role="status"></p>
             <!-- Minimal Category Switcher Filter -->
             <div class="category-filters">
-                <button class="filter-chip active" data-filter="all">All Items (10)</button>
+                <button class="filter-chip active" data-filter="all">All items</button>
                 <button class="filter-chip" data-filter="signature"><i class="fa-solid fa-mug-hot"></i> Espresso & Lattes</button>
                 <button class="filter-chip" data-filter="non-coffee"><i class="fa-solid fa-leaf"></i> Refreshers & Tea</button>
                 <button class="filter-chip" data-filter="pastries"><i class="fa-solid fa-bread-slice"></i> Bakery Pastries</button>
             </div>
         </header>
+
+        <div class="menu-empty" id="menuEmpty" hidden>
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <h2>No favorites found just yet</h2>
+            <p>Try a different name or explore the full menu.</p>
+            <button id="resetMenu" class="browse-menu-btn">Show all items</button>
+        </div>
 
         <!-- MINIMAL FOOD CART PRODUCTS GRID -->
         <section class="products-grid">
@@ -811,8 +824,8 @@
         <div class="checkout-view" id="checkoutFormView">
             <div class="modal-header">
                 <div class="modal-title-group">
-                    <span class="modal-tag">[ FOOD CART CHECKOUT ]</span>
-                    <h2 id="modalTitle">Your Cart & Payment</h2>
+                    <span class="modal-tag">ONE MORE STEP TO YOUR COFFEE</span>
+                    <h2 id="modalTitle">Review your order</h2>
                 </div>
                 <button class="modal-close-btn" id="modalCloseBtn" aria-label="Close Checkout">&times;</button>
             </div>
@@ -858,11 +871,12 @@
 
                     <div class="form-grid">
                         <div class="input-field full-width">
-                            <label for="custName">Buyer Name *</label>
+                            <label for="custName">Name for your order *</label>
                             <input type="text" id="custName" placeholder="Enter your name (e.g. Min-ji or Alex)" autocomplete="name" required>
+                            <span class="field-error" id="nameError" hidden>Please enter the name we should call at pickup.</span>
                         </div>
                         <div class="input-field">
-                            <label for="custPhone">Mobile / Cart Buzzer # (Optional)</label>
+                            <label for="custPhone">Mobile number (optional)</label>
                             <input type="tel" id="custPhone" placeholder="09XX-XXX-XXXX (optional)" autocomplete="tel">
                         </div>
                         <div class="input-field">
@@ -879,6 +893,7 @@
                 <!-- Payment Method -->
                 <div class="modal-section" id="paymentMethodSection">
                     <h3>Payment Method</h3>
+                    <p class="checkout-hint">Pay when you pick up. Choose your preferred payment method below.</p>
                     <div class="payment-methods-grid">
                         <label class="payment-pill active" data-method="GCash / Maya">
                             <input type="radio" name="paymentMethod" value="GCash / Maya" checked>
@@ -928,6 +943,7 @@
 
             <!-- Modal Footer with Animated Pay Button -->
             <div class="modal-footer">
+                <button class="continue-shopping" id="continueShoppingBtn">Continue browsing</button>
                 <button class="confirm-pay-btn liquid-sheen" id="confirmPayBtn">
                     <span class="btn-text"><i class="fa-solid fa-lock"></i> Place order &middot; <span id="payBtnAmount">₱0</span></span>
                     <span class="btn-brewing-loader">
