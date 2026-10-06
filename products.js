@@ -217,13 +217,21 @@ function initCategoryFilters() {
         });
         filters.forEach(chip => chip.setAttribute('aria-pressed', String(chip.classList.contains('active'))));
         const status = document.getElementById('menuResults');
-        if (status) status.textContent = count ? `${count} little reasons to smile` : 'No matches. Try another flavor or category.';
+        if (status) status.textContent = `${count} ${count === 1 ? 'item' : 'items'}${query ? ` matching “${search.value.trim()}”` : ' to choose from'}`;
+        const empty = document.getElementById('menuEmpty');
+        if (empty) empty.hidden = count !== 0;
     };
     filters.forEach(chip => chip.addEventListener('click', () => {
         filters.forEach(c => c.classList.toggle('active', c === chip));
         apply();
     }));
     search?.addEventListener('input', apply);
+    document.getElementById('resetMenu')?.addEventListener('click', () => {
+        if (search) search.value = '';
+        filters.forEach(chip => chip.classList.toggle('active', chip.dataset.filter === 'all'));
+        apply();
+        search?.focus();
+    });
     const category = new URLSearchParams(location.search).get('category');
     const initial = Array.from(filters).find(chip => chip.dataset.filter === category);
     if (initial) initial.click();
@@ -698,7 +706,19 @@ function initCheckoutAndCartSystem() {
     }
 
     if (modalCloseBtn) modalCloseBtn.addEventListener("click", closeCheckout);
+    document.getElementById('continueShoppingBtn')?.addEventListener('click', closeCheckout);
     if (checkoutBackdrop) checkoutBackdrop.addEventListener("click", closeCheckout);
+    document.querySelectorAll('input[name="pickupStyle"], input[name="paymentMethod"]').forEach(input => {
+        input.addEventListener('change', () => {
+            document.querySelectorAll(`input[name="${input.name}"]`).forEach(radio => {
+                radio.closest('label').classList.toggle('active', radio.checked);
+            });
+        });
+    });
+    document.getElementById('custName')?.addEventListener('input', event => {
+        event.target.removeAttribute('aria-invalid');
+        document.getElementById('nameError').hidden = true;
+    });
 
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && checkoutModal && checkoutModal.classList.contains("open")) {
@@ -755,7 +775,9 @@ function initCheckoutAndCartSystem() {
             const baristaNote = document.getElementById("baristaNote")?.value.trim() || "";
 
             if (!custName) {
-                showToast("Please enter your Buyer Name to place your order.");
+                document.getElementById('nameError').hidden = false;
+                custNameInput?.setAttribute('aria-invalid', 'true');
+                custNameInput?.setAttribute('aria-describedby', 'nameError');
                 if (custNameInput) custNameInput.focus();
                 return;
             }
@@ -975,6 +997,9 @@ function updateCartBadge() {
     if (cartCountEl) cartCountEl.textContent = totalCount;
     const label = document.querySelector('#cartTrigger .cart-label');
     if (label) label.textContent = totalCount ? `Your bag \u00b7 \u20b1${calculateCartTotal()}` : 'Your bag';
+    const trigger = document.getElementById('cartTrigger');
+    trigger?.classList.toggle('has-items', totalCount > 0);
+    trigger?.setAttribute('aria-label', `Review bag, ${totalCount} ${totalCount === 1 ? 'item' : 'items'}, ${calculateCartTotal()} pesos`);
 }
 
 function calculateCartTotal() {
@@ -1121,6 +1146,7 @@ function bounceCart() {
     }
 }
 
+let toastTimeout;
 function showToast(message) {
     let toast = document.querySelector(".toast");
     if (!toast) {
@@ -1131,7 +1157,8 @@ function showToast(message) {
     toast.setAttribute("role", "status");
     toast.textContent = message;
     toast.classList.add("show");
-    setTimeout(() => {
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
         toast.classList.remove("show");
     }, 2400);
 }
