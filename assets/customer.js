@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Math.abs(target - position) < 0.1) position = target;
 
     const height = tide.offsetHeight;
+    const scrollRange = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const progress = scrollRange > 0 ? Math.min(1, target / scrollRange) : 1;
+    tide.style.setProperty('--tide-opacity', String(0.7 + progress * 0.3));
     const dock = Math.min(0, footer.getBoundingClientRect().top - (window.innerHeight - height));
     const drift = reducedMotion.matches ? 0 : Math.sin(position / 480);
     // Lower the surface slightly on downward scroll and raise it on return.

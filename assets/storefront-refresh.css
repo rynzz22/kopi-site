@@ -19,7 +19,7 @@
 .coffee-tide .tide-caramel { animation-duration:21s; animation-direction:reverse; translate:0 15px; }
 .coffee-tide .tide-espresso { animation-duration:12s; translate:0 30px; }
 .coffee-footer.has-scroll-tide { padding-top:120px; }
-.has-scroll-tide .coffee-tide { position:fixed; left:0; right:0; bottom:0; z-index:20; pointer-events:none; transform:translateY(var(--tide-dock,0px)); }
+.has-scroll-tide .coffee-tide { position:fixed; left:0; right:0; bottom:0; z-index:20; pointer-events:none; opacity:var(--tide-opacity,.7); transform:translateY(var(--tide-dock,0px)); }
 .has-scroll-tide .coffee-tide svg { width:calc(100% + 96px); max-width:none; margin-left:-48px; transform:translateY(var(--tide-lift,0px)); }
 .has-scroll-tide .tide-crema { translate:var(--tide-back,0px) 0; }
 .has-scroll-tide .tide-caramel { translate:var(--tide-mid,0px) 15px; }
