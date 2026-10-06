@@ -3,7 +3,7 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-    initLiquidCanvasEffect();
+    // Customer pages use lightweight CSS motion instead of a full-screen canvas.
     initSlidingNavIndicator();
     initMobileNavigation();
     initCategoryFilters();
@@ -203,26 +203,31 @@ function initMobileNavigation() {
    4. CATEGORY FILTERS
    ========================================================================== */
 function initCategoryFilters() {
-    const filterChips = document.querySelectorAll(".category-filters .filter-chip");
-    const cards = document.querySelectorAll(".products-grid .cart-card");
-
-    filterChips.forEach(chip => {
-        chip.addEventListener("click", () => {
-            filterChips.forEach(c => c.classList.remove("active"));
-            chip.classList.add("active");
-
-            const filter = chip.getAttribute("data-filter") || "all";
-
-            cards.forEach(card => {
-                const cat = card.getAttribute("data-category");
-                if (filter === "all" || cat === filter) {
-                    card.style.display = "flex";
-                } else {
-                    card.style.display = "none";
-                }
-            });
+    const filters = document.querySelectorAll('.category-filters .filter-chip');
+    const search = document.getElementById('menuSearch');
+    const apply = () => {
+        const category = document.querySelector('.filter-chip.active')?.dataset.filter || 'all';
+        const query = search?.value.trim().toLowerCase() || '';
+        let count = 0;
+        document.querySelectorAll('.products-grid .cart-card').forEach(card => {
+            const visible = (category === 'all' || card.dataset.category === category) &&
+                (card.dataset.title + ' ' + card.querySelector('.desc')?.textContent).toLowerCase().includes(query);
+            card.style.display = visible ? 'flex' : 'none';
+            if (visible) count++;
         });
-    });
+        filters.forEach(chip => chip.setAttribute('aria-pressed', String(chip.classList.contains('active'))));
+        const status = document.getElementById('menuResults');
+        if (status) status.textContent = count ? `${count} little reasons to smile` : 'No matches. Try another flavor or category.';
+    };
+    filters.forEach(chip => chip.addEventListener('click', () => {
+        filters.forEach(c => c.classList.toggle('active', c === chip));
+        apply();
+    }));
+    search?.addEventListener('input', apply);
+    const category = new URLSearchParams(location.search).get('category');
+    const initial = Array.from(filters).find(chip => chip.dataset.filter === category);
+    if (initial) initial.click();
+    apply();
 }
 
 /* ==========================================================================
@@ -734,6 +739,7 @@ function initCheckoutAndCartSystem() {
     // 8. Place Order & Pay Brewing Flow (Connected to real Laravel / Supabase API)
     if (confirmPayBtn) {
         confirmPayBtn.addEventListener("click", async () => {
+            if (confirmPayBtn.classList.contains("is-brewing")) return;
             if (cartItems.length === 0) {
                 showToast("Your cart is empty! Please choose a beverage or pastry.");
                 return;
@@ -754,13 +760,15 @@ function initCheckoutAndCartSystem() {
                 return;
             }
 
+            const emailInput = document.getElementById('custEmail');
+            if (emailInput && !emailInput.reportValidity()) return;
             confirmPayBtn.classList.add("is-brewing");
             const loaderText = confirmPayBtn.querySelector(".loader-text");
             const barFill = confirmPayBtn.querySelector(".loader-bar-fill");
 
             if (barFill) barFill.style.width = "0%";
             setTimeout(() => { if (barFill) barFill.style.width = "40%"; }, 50);
-            if (loaderText) loaderText.textContent = "Connecting to barista order bar...";
+            if (loaderText) loaderText.textContent = "Sending your order...";
 
             // Map cart items into API payload
             const orderPayload = {
@@ -782,7 +790,7 @@ function initCheckoutAndCartSystem() {
             try {
                 if (window.kopiClient) {
                     if (barFill) barFill.style.width = "75%";
-                    if (loaderText) loaderText.textContent = "Transmitting ticket to kitchen via WebSocket...";
+                    if (loaderText) loaderText.textContent = "Letting our team know...";
                     const res = await window.kopiClient.createOrder(orderPayload);
                     if (res && res.success && res.data) {
                         createdOrder = res.data;
@@ -797,21 +805,16 @@ function initCheckoutAndCartSystem() {
                 console.warn("Order API error:", err);
             }
 
-            // Fallback object if server unavailable
+            // A receipt is only valid after the server accepts the order.
             if (!createdOrder) {
-                createdOrder = {
-                    id: Math.floor(1000 + Math.random() * 9000),
-                    customer_name: custName,
-                    customer_email: custEmail,
-                    total_amount: totalAmount,
-                    status: "PENDING",
-                    items: orderPayload.items,
-                    created_at: new Date().toISOString()
-                };
+                confirmPayBtn.classList.remove('is-brewing');
+                if (barFill) barFill.style.width = '0%';
+                showToast('We could not send your order. Your cart is safe - please try again.');
+                return;
             }
 
             if (barFill) barFill.style.width = "100%";
-            if (loaderText) loaderText.textContent = "Order queued! Ticket printed.";
+            if (loaderText) loaderText.textContent = "Your order is in!";
 
             setTimeout(() => {
                 confirmPayBtn.classList.remove("is-brewing");
@@ -829,7 +832,7 @@ function initCheckoutAndCartSystem() {
                 if (receiptTicketEl) receiptTicketEl.textContent = ticketId;
                 if (receiptCustNameEl) receiptCustNameEl.textContent = custName;
                 if (receiptOrderTypeEl) receiptOrderTypeEl.textContent = selectedPickup.includes("To-Go") ? "To-Go" : "Dine-In Bench";
-                if (receiptPayMethodEl) receiptPayMethodEl.textContent = `${selectedPayment} (Paid)`;
+                if (receiptPayMethodEl) receiptPayMethodEl.textContent = `${selectedPayment} - payment at pickup`;
                 if (receiptTotalEl) receiptTotalEl.textContent = `₱${createdOrder.total_amount || totalAmount}`;
 
                 if (trackOrderLiveBtn) {
@@ -970,6 +973,8 @@ function updateCartBadge() {
     const cartCountEl = document.getElementById("cartCount");
     const totalCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
     if (cartCountEl) cartCountEl.textContent = totalCount;
+    const label = document.querySelector('#cartTrigger .cart-label');
+    if (label) label.textContent = totalCount ? `Your bag \u00b7 \u20b1${calculateCartTotal()}` : 'Your bag';
 }
 
 function calculateCartTotal() {
@@ -1048,9 +1053,9 @@ function renderCartModal() {
             </div>
             <div class="item-controls-col">
                 <div class="item-qty-pill">
-                    <button class="cart-minus-btn" data-index="${index}"><i class="fa-solid fa-minus"></i></button>
+                    <button aria-label="Decrease quantity" class="cart-minus-btn" data-index="${index}"><i class="fa-solid fa-minus"></i></button>
                     <span>${item.qty}</span>
-                    <button class="cart-plus-btn" data-index="${index}"><i class="fa-solid fa-plus"></i></button>
+                    <button aria-label="Increase quantity" class="cart-plus-btn" data-index="${index}"><i class="fa-solid fa-plus"></i></button>
                 </div>
                 <span class="item-price-col">₱${item.unitPrice * item.qty}</span>
                 <button class="item-remove-btn" data-index="${index}" title="Remove item"><i class="fa-solid fa-trash-can"></i></button>
@@ -1123,6 +1128,7 @@ function showToast(message) {
         toast.className = "toast";
         document.body.appendChild(toast);
     }
+    toast.setAttribute("role", "status");
     toast.textContent = message;
     toast.classList.add("show");
     setTimeout(() => {

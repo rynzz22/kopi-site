@@ -502,6 +502,10 @@ class KkeopiClient {
 
   // --- WEBSOCKETS + SUPABASE REALTIME POLLING ---
   initWebSocket() {
+    if (window.KKEOPI_CONFIG?.disableLocalWebSocket) {
+      this.startPollingFallback();
+      return;
+    }
     if (window.location.protocol === 'file:') {
       this.startPollingFallback();
       return;

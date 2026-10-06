@@ -6,11 +6,11 @@ import { createServer as createViteServer } from 'vite';
 import { db, OrderStatus } from './server/db.js';
 
 const app = express();
-const PORT = 3000;
+const PORT = 3005;
 
 app.use(express.json());
 
-// Create HTTP server to bind both Express and WebSockets on port 3000
+// Create HTTP server to bind both Express and WebSockets on port 3005
 const httpServer = http.createServer(app);
 
 // WebSocket Setup

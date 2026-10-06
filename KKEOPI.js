@@ -8,14 +8,14 @@
 ========================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
-    initLiquidCoffeeCanvas();
+
     initLiquidSlidingPillNav();
     initMobileNavDrawer();
     initFoodCartMenu();
     initPaymentAndCheckoutSystem();
-    initParallaxAndGlow();
+
     initRippleButtons();
-    initFloatingCards();
+
 });
 
 /* ==========================================================
