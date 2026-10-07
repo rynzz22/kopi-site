@@ -11,7 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentOrderData = null;
   let audioEnabled = true;
   let notificationsEnabled = false;
-  let notificationPermission = 'default';
+  let pollInFlight = false;
+  let orderRevision = 0;
+  let lookupRevision = 0;
   let elapsedInterval = null;
 
   // DOM Elements
@@ -35,6 +37,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   const printTicketBtn = document.getElementById('printTicketBtn');
   const notificationBtn = document.getElementById('notificationBtn');
   const notificationLabel = document.getElementById('notificationLabel');
+  const popupRegion = document.createElement('div');
+  popupRegion.className = 'order-notifications';
+  popupRegion.setAttribute('aria-live', 'polite');
+  popupRegion.setAttribute('aria-relevant', 'additions');
+  document.body.appendChild(popupRegion);
+
+  function showPopup(title, body) {
+    const popup = document.createElement('section');
+    popup.className = 'order-notification';
+    const heading = document.createElement('strong');
+    heading.textContent = title;
+    const message = document.createElement('p');
+    message.textContent = body;
+    const dismiss = document.createElement('button');
+    dismiss.type = 'button';
+    dismiss.textContent = 'Dismiss';
+    dismiss.setAttribute('aria-label', `Dismiss ${title}`);
+    dismiss.addEventListener('click', () => popup.remove());
+    popup.append(heading, message, dismiss);
+    popupRegion.appendChild(popup);
+    while (popupRegion.children.length > 3) popupRegion.firstElementChild.remove();
+  }
 
   const stepElements = {
     PENDING: document.getElementById('step-pending'),
@@ -131,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function requestNotificationPermission() {
     if (!('Notification' in window)) {
-      console.warn('This browser does not support notifications');
+      showPopup('In-page alerts are on', 'This browser does not support desktop notifications. Keep this tracking page open for order updates.');
       return false;
     }
 
@@ -142,8 +166,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
-      notificationPermission = permission;
+      let permission;
+      try {
+        permission = await Notification.requestPermission();
+      } catch {
+        showPopup('In-page alerts are on', 'Browser notifications are unavailable. Order updates will still appear here.');
+        return false;
+      }
       if (permission === 'granted') {
         notificationsEnabled = true;
         updateNotificationButton();
@@ -153,49 +182,55 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     notificationsEnabled = false;
     updateNotificationButton();
+    showPopup('In-page alerts are on', 'Browser notifications were not enabled. Keep this tracking page open to see order updates.');
     return false;
   }
 
   function showOrderStatusNotification(status, orderId) {
-    if (!notificationsEnabled || Notification.permission !== 'granted') {
-      return;
-    }
-
     const message = statusNotificationMessages[status];
     if (!message) return;
+    showPopup(`Order #${orderId}: ${message.title}`, message.body);
+    if (!notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
 
-    const notification = new Notification(message.title, {
-      body: message.body,
-      icon: '/assets/kkeopi_logo.jpg',
-      badge: '/assets/kkeopi_logo.jpg',
-      tag: `order-${orderId}`,
-      requireInteraction: status === 'READY' || status === 'CANCELLED',
-      vibrate: status === 'READY' ? [200, 100, 200] : undefined
-    });
+    try {
+      const notification = new Notification(`Order #${orderId}: ${message.title}`, {
+        body: message.body,
+        icon: '/assets/kkeopi_logo.jpg',
+        badge: '/assets/kkeopi_logo.jpg',
+        tag: `order-${orderId}`,
+        requireInteraction: status === 'READY' || status === 'CANCELLED',
+        vibrate: status === 'READY' ? [200, 100, 200] : undefined
+      });
 
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
-
-    // Auto-close non-critical notifications after 5 seconds
-    if (status !== 'READY' && status !== 'CANCELLED') {
-      setTimeout(() => {
+      notification.onclick = () => {
+        window.focus();
         notification.close();
-      }, 5000);
+      };
+
+      // Auto-close non-critical notifications after 5 seconds
+      if (status !== 'READY' && status !== 'CANCELLED') {
+        setTimeout(() => {
+          notification.close();
+        }, 5000);
+      }
+    } catch {
+      // Some mobile browsers expose Notification but cannot construct one.
+      // The in-page notification above remains available.
     }
   }
 
   function updateNotificationButton() {
     if (!notificationBtn || !notificationLabel) return;
 
-    if (notificationsEnabled && Notification.permission === 'granted') {
+    const permission = 'Notification' in window ? Notification.permission : 'unsupported';
+    notificationBtn.setAttribute('aria-pressed', String(notificationsEnabled));
+    if (notificationsEnabled && permission === 'granted') {
       notificationLabel.textContent = 'Notif On';
       notificationBtn.style.opacity = '1';
       notificationBtn.style.background = 'var(--accent-kopi)';
       notificationBtn.style.color = '#120D0A';
-    } else if (Notification.permission === 'denied') {
-      notificationLabel.textContent = 'Blocked';
+    } else if (permission === 'denied' || permission === 'unsupported') {
+      notificationLabel.textContent = 'In-page alerts';
       notificationBtn.style.opacity = '0.6';
       notificationBtn.style.background = 'var(--bg-elevated)';
       notificationBtn.style.color = 'var(--text-primary)';
@@ -209,12 +244,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Check initial notification permission
   if ('Notification' in window) {
-    notificationPermission = Notification.permission;
-    if (notificationPermission === 'granted') {
+    if (Notification.permission === 'granted') {
       notificationsEnabled = true;
     }
-    updateNotificationButton();
   }
+  updateNotificationButton();
 
   // Notification button click handler
   if (notificationBtn) {
@@ -293,52 +327,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     elapsedInterval = setInterval(updateElapsedDisplay, 1000);
   }
 
+  // Realtime and polling share one status baseline so duplicate delivery is silent.
+  function receiveOrderUpdate(updated) {
+    const targetId = updated?.id || updated?.order_id;
+    if (String(targetId) !== String(currentOrderId) || !currentOrderData
+        || !statusProgressMap[updated.status]) return;
+    const previousTime = Date.parse(currentOrderData.updated_at);
+    const incomingTime = Date.parse(updated.updated_at);
+    if (Number.isFinite(previousTime) && Number.isFinite(incomingTime) && incomingTime < previousTime) return;
+    const changed = currentOrderData.status !== updated.status;
+    currentOrderData = { ...currentOrderData, ...updated };
+    orderRevision++;
+    applyOrderStatus(updated.status, currentOrderData);
+    updateElapsedDisplay();
+    if (!changed) return;
+    showOrderStatusNotification(updated.status, currentOrderId);
+    if (updated.status === 'READY') celebrateReady();
+    if (audioEnabled && client?.playChime) {
+      client.playChime(updated.status === 'READY' ? 'ready' : 'ping');
+    }
+  }
+
   // Subscribe to real-time updates
   if (client) {
     client.on('order:status_updated', (data) => {
-      const updated = data.order || data;
-      const targetId = updated.id || updated.order_id;
-      if (String(targetId) === String(currentOrderId)) {
-        if (currentOrderData) {
-          currentOrderData.status = updated.status;
-        }
-        applyOrderStatus(updated.status, updated);
-        showOrderStatusNotification(updated.status, currentOrderId);
-        if (audioEnabled && client.playChime) {
-          if (updated.status === 'READY') {
-            client.playChime('ready');
-            celebrateReady();
-          } else {
-            client.playChime('ping');
-          }
-        }
-      }
+      receiveOrderUpdate(data?.order || data);
     });
 
-    let lastKnownStatus = null;
     client.on('poll:tick', async () => {
-      if (!currentOrderId) return;
+      if (!currentOrderId || !currentOrderData || pollInFlight) return;
+      pollInFlight = true;
+      const requestedId = currentOrderId;
+      const revision = orderRevision;
+      const lookup = lookupRevision;
       try {
-        const res = await client.getOrder(currentOrderId);
-        if (res && res.success && res.data) {
-          const order = res.data;
-          if (lastKnownStatus && order.status !== lastKnownStatus) {
-            currentOrderData = order;
-            applyOrderStatus(order.status, order);
-            showOrderStatusNotification(order.status, currentOrderId);
-            if (audioEnabled && client.playChime) {
-              if (order.status === 'READY') {
-                client.playChime('ready');
-                celebrateReady();
-              } else {
-                client.playChime('ping');
-              }
-            }
-          }
-          lastKnownStatus = order.status;
+        const res = await client.getOrder(requestedId);
+        if (requestedId === currentOrderId && revision === orderRevision && lookup === lookupRevision
+            && res?.success && res.data) {
+          receiveOrderUpdate(res.data);
         }
       } catch {
         // Ignore poll error
+      } finally {
+        pollInFlight = false;
       }
     });
   }
@@ -358,6 +389,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function loadOrder() {
+    const lookup = ++lookupRevision;
+    const requestedId = currentOrderId;
+    currentOrderData = null;
+    popupRegion.replaceChildren();
     // Only load an order explicitly selected by link or order-number lookup.
     if (!currentOrderId) {
       statusMessageBanner.innerHTML = `
@@ -371,13 +406,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      const res = await client.getOrder(currentOrderId);
+      const res = await client.getOrder(requestedId);
+      if (lookup !== lookupRevision) return;
       if (res && res.success && res.data) {
         renderOrder(res.data);
       } else {
         statusMessageBanner.innerHTML = `<span style="color: #EF4444;">Order #${escapeHtml(currentOrderId)} was not found.</span>`;
       }
     } catch (err) {
+      if (lookup !== lookupRevision) return;
       statusMessageBanner.innerHTML = `<span style="color: #EF4444;">Unable to load Order #${escapeHtml(currentOrderId)}: ${escapeHtml(err.message)}</span>`;
     }
 

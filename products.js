@@ -665,6 +665,51 @@ function initCheckoutAndCartSystem() {
     const confirmPayBtn = document.getElementById("confirmPayBtn");
     const newOrderBtn = document.getElementById("newOrderBtn");
     const downloadReceiptBtn = document.getElementById("downloadReceiptBtn");
+    const phoneInput = document.getElementById('custPhone');
+    const phoneError = document.getElementById('phoneError');
+
+    function showPhoneReminder(message) {
+        if (!phoneError) return;
+        phoneError.textContent = message;
+        phoneError.hidden = !message;
+    }
+
+    if (phoneInput) {
+        // Check the proposed value before maxlength silently blocks extra digits.
+        phoneInput.addEventListener('beforeinput', event => {
+            if (!event.inputType.startsWith('insert') || event.data == null) return;
+            const proposed = phoneInput.value.slice(0, phoneInput.selectionStart)
+                + event.data + phoneInput.value.slice(phoneInput.selectionEnd);
+            if (/[^0-9]/.test(event.data) || proposed.length > 12) {
+                event.preventDefault();
+                showPhoneReminder(proposed.replace(/[^0-9]/g, '').length > 12
+                    ? 'Phone number can contain a maximum of 12 digits.'
+                    : 'Please enter digits only (0-9).');
+            }
+        });
+        phoneInput.addEventListener('paste', event => {
+            const pasted = event.clipboardData?.getData('text');
+            if (pasted == null) return;
+            event.preventDefault();
+            const start = phoneInput.selectionStart ?? phoneInput.value.length;
+            const end = phoneInput.selectionEnd ?? start;
+            const proposed = phoneInput.value.slice(0, start) + pasted + phoneInput.value.slice(end);
+            const digits = proposed.replace(/[^0-9]/g, '');
+            phoneInput.value = digits.slice(0, 12);
+            showPhoneReminder(digits.length > 12
+                ? 'Phone number can contain a maximum of 12 digits. Extra digits were removed.'
+                : /[^0-9]/.test(proposed) ? 'Please enter digits only (0-9). Other characters were removed.' : '');
+        });
+        // Covers autofill and input methods that do not support beforeinput.
+        phoneInput.addEventListener('input', () => {
+            const original = phoneInput.value;
+            const digits = original.replace(/[^0-9]/g, '');
+            phoneInput.value = digits.slice(0, 12);
+            showPhoneReminder(digits.length > 12
+                ? 'Phone number can contain a maximum of 12 digits. Extra digits were removed.'
+                : original !== digits ? 'Please enter digits only (0-9).' : '');
+        });
+    }
 
     // 1. "+ Add to Cart" buttons on cards
     document.querySelectorAll(".cart.add-btn").forEach(button => {
@@ -784,6 +829,11 @@ function initCheckoutAndCartSystem() {
 
             const emailInput = document.getElementById('custEmail');
             if (emailInput && !emailInput.reportValidity()) return;
+            if (!/^[0-9]{0,12}$/.test(custPhone)) {
+                showPhoneReminder('Please enter digits only, up to a maximum of 12.');
+                phoneInput?.focus();
+                return;
+            }
             confirmPayBtn.classList.add("is-brewing");
             const loaderText = confirmPayBtn.querySelector(".loader-text");
             const barFill = confirmPayBtn.querySelector(".loader-bar-fill");

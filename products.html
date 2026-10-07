@@ -877,7 +877,9 @@
                         </div>
                         <div class="input-field">
                             <label for="custPhone">Mobile number (optional)</label>
-                            <input type="tel" id="custPhone" placeholder="09XX-XXX-XXXX (optional)" autocomplete="tel">
+                            <input type="tel" id="custPhone" placeholder="09XXXXXXXXX (optional)" autocomplete="tel" inputmode="numeric" pattern="[0-9]{0,12}" maxlength="12" aria-describedby="phoneHint phoneError">
+                            <small id="phoneHint">Digits only, up to 12 characters.</small>
+                            <small id="phoneError" role="status" aria-live="polite" hidden style="color: #b42318;"></small>
                         </div>
                         <div class="input-field">
                             <label for="custEmail">Email Address (Optional)</label>
