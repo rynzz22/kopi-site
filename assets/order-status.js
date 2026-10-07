@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentOrderId = urlParams.get('id');
   let currentOrderData = null;
   let audioEnabled = true;
+  let notificationsEnabled = false;
+  let notificationPermission = 'default';
   let elapsedInterval = null;
 
   // DOM Elements
@@ -31,6 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const copyTrackLinkBtn = document.getElementById('copyTrackLinkBtn');
   const copyLinkText = document.getElementById('copyLinkText');
   const printTicketBtn = document.getElementById('printTicketBtn');
+  const notificationBtn = document.getElementById('notificationBtn');
+  const notificationLabel = document.getElementById('notificationLabel');
 
   const stepElements = {
     PENDING: document.getElementById('step-pending'),
@@ -89,6 +93,139 @@ document.addEventListener('DOMContentLoaded', async () => {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  // Notification Service
+  const statusNotificationMessages = {
+    PENDING: {
+      title: 'Order Received',
+      body: 'Your order is in the queue at the espresso bar.',
+      icon: 'fa-regular fa-file-lines'
+    },
+    CONFIRMED: {
+      title: 'Order Confirmed',
+      body: 'Barista is preparing your cup and ingredients.',
+      icon: 'fa-solid fa-check'
+    },
+    PREPARING: {
+      title: 'Brewing in Progress',
+      body: 'Your drink is being made — pulling espresso shots and texturing milk.',
+      icon: 'fa-solid fa-fire-burner'
+    },
+    READY: {
+      title: '🎉 Your Order is READY!',
+      body: 'Your drink is ready for pickup at the counter.',
+      icon: 'fa-solid fa-bell-concierge'
+    },
+    COMPLETED: {
+      title: 'Order Completed',
+      body: 'Order picked up. Enjoy your KKEOPI cup!',
+      icon: 'fa-solid fa-mug-hot'
+    },
+    CANCELLED: {
+      title: 'Order Cancelled',
+      body: 'This order was cancelled. Please check with the barista.',
+      icon: 'fa-solid fa-ban'
+    }
+  };
+
+  async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+      console.warn('This browser does not support notifications');
+      return false;
+    }
+
+    if (Notification.permission === 'granted') {
+      notificationsEnabled = true;
+      updateNotificationButton();
+      return true;
+    }
+
+    if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      notificationPermission = permission;
+      if (permission === 'granted') {
+        notificationsEnabled = true;
+        updateNotificationButton();
+        return true;
+      }
+    }
+
+    notificationsEnabled = false;
+    updateNotificationButton();
+    return false;
+  }
+
+  function showOrderStatusNotification(status, orderId) {
+    if (!notificationsEnabled || Notification.permission !== 'granted') {
+      return;
+    }
+
+    const message = statusNotificationMessages[status];
+    if (!message) return;
+
+    const notification = new Notification(message.title, {
+      body: message.body,
+      icon: '/assets/kkeopi_logo.jpg',
+      badge: '/assets/kkeopi_logo.jpg',
+      tag: `order-${orderId}`,
+      requireInteraction: status === 'READY' || status === 'CANCELLED',
+      vibrate: status === 'READY' ? [200, 100, 200] : undefined
+    });
+
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+
+    // Auto-close non-critical notifications after 5 seconds
+    if (status !== 'READY' && status !== 'CANCELLED') {
+      setTimeout(() => {
+        notification.close();
+      }, 5000);
+    }
+  }
+
+  function updateNotificationButton() {
+    if (!notificationBtn || !notificationLabel) return;
+
+    if (notificationsEnabled && Notification.permission === 'granted') {
+      notificationLabel.textContent = 'Notif On';
+      notificationBtn.style.opacity = '1';
+      notificationBtn.style.background = 'var(--accent-kopi)';
+      notificationBtn.style.color = '#120D0A';
+    } else if (Notification.permission === 'denied') {
+      notificationLabel.textContent = 'Blocked';
+      notificationBtn.style.opacity = '0.6';
+      notificationBtn.style.background = 'var(--bg-elevated)';
+      notificationBtn.style.color = 'var(--text-primary)';
+    } else {
+      notificationLabel.textContent = 'Notif Off';
+      notificationBtn.style.opacity = '0.6';
+      notificationBtn.style.background = 'var(--bg-elevated)';
+      notificationBtn.style.color = 'var(--text-primary)';
+    }
+  }
+
+  // Check initial notification permission
+  if ('Notification' in window) {
+    notificationPermission = Notification.permission;
+    if (notificationPermission === 'granted') {
+      notificationsEnabled = true;
+    }
+    updateNotificationButton();
+  }
+
+  // Notification button click handler
+  if (notificationBtn) {
+    notificationBtn.addEventListener('click', async () => {
+      if (notificationsEnabled) {
+        notificationsEnabled = false;
+        updateNotificationButton();
+      } else {
+        await requestNotificationPermission();
+      }
+    });
   }
 
   // Audio alert toggle
@@ -166,6 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           currentOrderData.status = updated.status;
         }
         applyOrderStatus(updated.status, updated);
+        showOrderStatusNotification(updated.status, currentOrderId);
         if (audioEnabled && client.playChime) {
           if (updated.status === 'READY') {
             client.playChime('ready');
@@ -187,6 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (lastKnownStatus && order.status !== lastKnownStatus) {
             currentOrderData = order;
             applyOrderStatus(order.status, order);
+            showOrderStatusNotification(order.status, currentOrderId);
             if (audioEnabled && client.playChime) {
               if (order.status === 'READY') {
                 client.playChime('ready');
