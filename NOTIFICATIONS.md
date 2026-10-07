@@ -1,5 +1,26 @@
 # KKEOPI Notification System Documentation
 
+## October 2026 update: in-page order alerts
+
+The tracking page now always shows dismissible pop-ups when the selected order's
+status changes. Browser notification permission is optional: denied permission,
+unsupported browsers, and failed native notification construction do not disable
+in-page alerts. Keep the tracking page open; closed-browser push is not implemented.
+
+Realtime and polling use the same status baseline. Initial loads and duplicate
+updates are silent, the first poll can detect a change, and delayed poll responses
+cannot overwrite a newer realtime update. Selecting another order resets the
+baseline and clears old pop-ups. Up to three alerts remain visible until dismissed.
+
+Checkout phone numbers are optional, accept only digits, and are limited to 12
+characters while preserving leading zeros. Typing invalid characters or pasting
+overlong values displays an inline reminder. Submission also checks the format.
+
+Run `node scripts/test-order-ui.mjs` for simulated DOM regression checks.
+
+The sections below describe the earlier browser notification implementation and
+future push proposal; browser/mobile support depends on the actual platform.
+
 ## Current Implementation (Phase 1: Web Notifications API)
 
 ### Overview
